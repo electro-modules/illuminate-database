@@ -1,5 +1,5 @@
 <?php
-namespace Selenia\Plugins\Config\IlluminateDatabase;
+namespace Selenia\Plugins\IlluminateDatabase\Config;
 
 use Selenia\Interfaces\ServiceProviderInterface;
 use Selenia\Interfaces\InjectorInterface;
