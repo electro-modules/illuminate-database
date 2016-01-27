@@ -23,11 +23,7 @@ Alternatively, you may type
 selenia module:install-plugin selenia-plugins/illuminate-database
 ```
 
-or type
-
-```shell
-composer require selenia-plugins/illuminate-database
-```
+> For correct operation, do not install this package directly with Composer.
 
 ### Documentation
 
