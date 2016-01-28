@@ -21,7 +21,8 @@
   "require": {
     "php": ">=5.6",
     "selenia/interop": "dev-master",
-    "illuminate/database": "^5.2.7"
+    "illuminate/database": "^5.2.7",
+    "php-kit/ext-pdo": "dev-master"
   },
   "autoload": {
     "psr-4": {

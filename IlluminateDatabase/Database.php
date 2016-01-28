@@ -2,7 +2,7 @@
 namespace Selenia\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
-use Selenia\Database\Connection;
+use PhpKit\Connection;
 
 class Database extends Manager
 {
