@@ -9,7 +9,7 @@ class Database extends Manager
   public function __construct (Connection $connection)
   {
     parent::__construct ();
-    $this->addConnection ($connection->getFromEnviroment ()->getProperties ());
+    $this->addConnection ($connection->getProperties ());
     $this->bootEloquent ();
     $this->setAsGlobal ();
   }
