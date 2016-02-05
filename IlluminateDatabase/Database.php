@@ -2,11 +2,11 @@
 namespace Selenia\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
-use PhpKit\Connection;
+use PhpKit\ConnectionInterface;
 
 class Database extends Manager
 {
-  public function __construct (Connection $connection)
+  public function __construct (ConnectionInterface $connection)
   {
     parent::__construct ();
     $this->addConnection ($connection->getProperties ());
