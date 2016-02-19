@@ -13,7 +13,7 @@ use PhpKit\Connection;
 class Migration extends AbstractMigration
 {
   /** @var Database */
-  protected $database;
+  protected $db;
 
   /**
    * @param array|string $columns An array of column names, or a string of comma-delimited column names.
@@ -61,41 +61,17 @@ class Migration extends AbstractMigration
    *                                 default.
    * @return Builder The builder, for chaining.
    */
-  function importCSV ($table, $columns, $csv, $connection = null)
+  protected function importCSV ($table, $columns, $csv, $connection = null)
   {
-    $b    = $this->onTable ($table);
-    $data = self::loadCSV ($columns, $csv);
-    $b->insert ($data);
-    return $b;
+    $data  = self::loadCSV ($columns, $csv);
+    $table = $this->db->table ($table, $connection);
+    $table->insert ($data);
+    return $table;
   }
 
   protected function init ()
   {
-    $con            = (new Connection)->getFromEnviroment ();
-    $this->database = new Database($con);
+    $con      = (new Connection)->getFromEnviroment ();
+    $this->db = new Database($con);
   }
-
-  /**
-   * Gets an Illuminate database fluent query builder instance.
-   *
-   * @param string $table      The target table name for the query.
-   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
-   * @return Builder
-   */
-  protected function onTable ($table, $connection = null)
-  {
-    return $this->database->table ($table, $connection);
-  }
-
-  /**
-   * Gets an Illuminate database schema builder instance.
-   *
-   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
-   * @return \Illuminate\Database\Schema\Builder
-   */
-  protected function schema ($connection = null)
-  {
-    return $this->database->schema ($connection);
-  }
-
 }
