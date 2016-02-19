@@ -16,6 +16,8 @@ class Migration extends AbstractMigration
   protected $db;
 
   /**
+   * Parses CSV-formatted data from a string and returns it as an array of arrays.
+   *
    * @param array|string $columns An array of column names, or a string of comma-delimited column names.
    * @param string       $csv     The CSV data.
    * @return array The loaded data.
@@ -54,6 +56,42 @@ class Migration extends AbstractMigration
   }
 
   /**
+   * Returns an instance of the Illuminate Database query builder.
+   *
+   * @param string $table      Table name,
+   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
+   * @return \Illuminate\Database\Query\Builder
+   */
+  protected function fromTable ($table, $connection = null)
+  {
+    return $this->db->fromTable ($table, $connection);
+  }
+
+  /**
+   * Returns an instance of the Illuminate Database query builder.
+   *
+   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
+   * @return \Illuminate\Database\Query\Builder
+   */
+  protected function getQuery ($connection = null)
+  {
+    return $this->db->getQuery ($connection);
+  }
+
+  /**
+   * Returns an instance of the Illuminate Database schema builder.
+   *
+   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
+   * @return \Illuminate\Database\Schema\Builder
+   */
+  protected function getSchema ($connection = null)
+  {
+    return $this->db->getSchema ($connection);
+  }
+
+  /**
+   * Imports data from a CSV-formatted string into a database table.
+   *
    * @param string       $table      A table name.
    * @param array|string $columns    An array of column names, or a string of comma-delimited column names.
    * @param string       $csv        The CSV data.
@@ -74,4 +112,6 @@ class Migration extends AbstractMigration
     $con      = (new Connection)->getFromEnviroment ();
     $this->db = new Database($con);
   }
+
+
 }
