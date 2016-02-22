@@ -8,11 +8,11 @@ use PhpKit\Connection;
 
 /**
  * Integrates Illuminate Database with Phinx migrations to allow the developer to create migrations on Selenia using
- * the Illuminate's schema builder, query builder and Eloquent.
+ * Illuminate's schema builder, query builder and Eloquent.
  */
 class Migration extends AbstractMigration
 {
-  /** @var Database */
+  /** @var DatabaseAPI */
   protected $db;
 
   /**
@@ -56,40 +56,6 @@ class Migration extends AbstractMigration
   }
 
   /**
-   * Returns an instance of the Illuminate Database query builder.
-   *
-   * @param string $table      Table name,
-   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
-   * @return \Illuminate\Database\Query\Builder
-   */
-  protected function fromTable ($table, $connection = null)
-  {
-    return $this->db->fromTable ($table, $connection);
-  }
-
-  /**
-   * Returns an instance of the Illuminate Database query builder.
-   *
-   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
-   * @return \Illuminate\Database\Query\Builder
-   */
-  protected function getQuery ($connection = null)
-  {
-    return $this->db->getQuery ($connection);
-  }
-
-  /**
-   * Returns an instance of the Illuminate Database schema builder.
-   *
-   * @param string $connection [optional] A connection name, if you want to use a connection other than the default.
-   * @return \Illuminate\Database\Schema\Builder
-   */
-  protected function getSchema ($connection = null)
-  {
-    return $this->db->getSchema ($connection);
-  }
-
-  /**
    * Imports data from a CSV-formatted string into a database table.
    *
    * @param string       $table      A table name.
@@ -110,7 +76,9 @@ class Migration extends AbstractMigration
   protected function init ()
   {
     $con      = (new Connection)->getFromEnviroment ();
-    $this->db = new Database($con);
+    $this->db = new DatabaseAPI ($con);
+    $this->db->manager->setAsGlobal ();
+    $this->db->manager->bootEloquent ();
   }
 
 
