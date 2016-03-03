@@ -106,4 +106,13 @@ class DatabaseAPI
     return $this->query ($connectionName)->from ($table);
   }
 
+  public function updateMultipleSelection ($table, $field, array $selectedIDs, $pk = 'id', $connectionName = null)
+  {
+    $this->connection ($connectionName)->transaction (function () use ($table, $field, $selectedIDs, $pk) {
+      $table = $this->table ($table);
+      $table->update ([$field => 0]);
+      $table->whereIn ($pk, $selectedIDs)->update ([$field => 1]);
+    });
+  }
+
 }
