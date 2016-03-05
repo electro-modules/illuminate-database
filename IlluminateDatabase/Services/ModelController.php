@@ -20,23 +20,32 @@ class ModelController extends OriginalConroller
     $this->db = $db;
   }
 
-  function loadRequested ($modelClass, $param = 'id')
+  function loadModel ($modelClass, $modelName = '', $id = null)
   {
-    $id = $this->request->getAttribute ("@$param");
-    if (!$id) return new $modelClass;
     /** @var Model $modelClass */
-    return $modelClass::query ()->findOrFail ($id);
+    $model = exists ($id) ? $modelClass::query ()->findOrFail ($id) : new $modelClass;
+    if ($modelName === '')
+      $this->model = $model;
+    else setAt ($this->model, $modelName, $model);
+    return $model;
   }
 
-  function saveModel ()
+  function loadRequested ($modelClass, $modelName = '', $param = 'id')
   {
-    if (!$this->model instanceof Model)
-      return parent::saveModel ();
+    return $this->loadModel ($modelClass, $modelName, $this->request->getAttribute ("@$param"));
+  }
 
+  function saveModel (array $options = [])
+  {
     $this->db->connection ()->beginTransaction ();
     try {
       $this->callEventHandlers ($this->preSaveHandlers);
-      $s = $this->model->save ();
+
+      $model = $this->model;
+      if ($model instanceof Model)
+        $s = $this->model->save ($options);
+      else $s = $this->saveCompositeModel ($options);
+
       $this->callEventHandlers ($this->postSaveHandlers);
       $this->db->connection ()->commit ();
       return $s;
@@ -45,6 +54,21 @@ class ModelController extends OriginalConroller
       $this->db->connection ()->rollBack ();
       throw $e;
     }
+  }
+
+  /**
+   * Saves all elements of the model that are instances of Model.
+   *
+   * @param array $options
+   * @return bool
+   */
+  protected function saveCompositeModel (array $options = [])
+  {
+    foreach ($this->model as $submodel)
+      if ($submodel instanceof Model)
+        if (!$submodel->save ($options))
+          return false;
+    return true;
   }
 
 }
