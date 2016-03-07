@@ -2,12 +2,12 @@
 namespace Selenia\Plugins\IlluminateDatabase\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use Selenia\Database\Services\ModelController as OriginalConroller;
+use Selenia\Database\Services\ModelController as BaseModelConroller;
 use Selenia\Interfaces\InjectorInterface;
 use Selenia\Interfaces\SessionInterface;
 use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
 
-class ModelController extends OriginalConroller
+class ModelController extends BaseModelConroller
 {
   /**
    * @var DatabaseAPI
@@ -20,13 +20,13 @@ class ModelController extends OriginalConroller
     $this->db = $db;
   }
 
-  function loadModel ($modelClass, $modelName = '', $id = null)
+  function loadModel ($modelClass, $path = '', $id = null)
   {
     /** @var Model $modelClass */
     $model = exists ($id) ? $modelClass::query ()->findOrFail ($id) : new $modelClass;
-    if ($modelName === '')
+    if ($path === '')
       $this->model = $model;
-    else setAt ($this->model, $modelName, $model);
+    else setAt ($this->model, $path, $model);
     return $model;
   }
 
@@ -35,40 +35,26 @@ class ModelController extends OriginalConroller
     return $this->loadModel ($modelClass, $modelName, $this->request->getAttribute ("@$param"));
   }
 
-  function saveModel (array $options = [])
+  function save ($model, array $options = [])
   {
-    $this->db->connection ()->beginTransaction ();
-    try {
-      $this->callEventHandlers ($this->preSaveHandlers);
-
-      $model = $this->model;
-      if ($model instanceof Model)
-        $s = $this->model->save ($options);
-      else $s = $this->saveCompositeModel ($options);
-
-      $this->callEventHandlers ($this->postSaveHandlers);
-      $this->db->connection ()->commit ();
-      return $s;
-    }
-    catch (\Exception $e) {
-      $this->db->connection ()->rollBack ();
-      throw $e;
-    }
+    if ($model instanceof Model)
+      return $this->model->save ($options);
+    return false;
   }
 
-  /**
-   * Saves all elements of the model that are instances of Model.
-   *
-   * @param array $options
-   * @return bool
-   */
-  protected function saveCompositeModel (array $options = [])
+  protected function beginTransaction ()
   {
-    foreach ($this->model as $submodel)
-      if ($submodel instanceof Model)
-        if (!$submodel->save ($options))
-          return false;
-    return true;
+    $this->db->connection ()->beginTransaction ();
+  }
+
+  protected function commit ()
+  {
+    $this->db->connection ()->commit ();
+  }
+
+  protected function rollback ()
+  {
+    $this->db->connection ()->rollBack ();
   }
 
 }
