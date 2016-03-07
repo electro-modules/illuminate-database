@@ -2,44 +2,21 @@
 namespace Selenia\Plugins\IlluminateDatabase\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use Selenia\Database\Services\ModelController as BaseModelConroller;
-use Selenia\Interfaces\InjectorInterface;
+use Selenia\Database\Lib\AbstractModelController;
 use Selenia\Interfaces\SessionInterface;
 use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
 
-class ModelController extends BaseModelConroller
+class ModelController extends AbstractModelController
 {
   /**
    * @var DatabaseAPI
    */
   private $db;
 
-  public function __construct (InjectorInterface $injector, SessionInterface $session, DatabaseAPI $db)
+  public function __construct (SessionInterface $session, DatabaseAPI $db)
   {
-    parent::__construct ($injector, $session);
+    parent::__construct ($session);
     $this->db = $db;
-  }
-
-  function loadModel ($modelClass, $path = '', $id = null)
-  {
-    /** @var Model $modelClass */
-    $model = exists ($id) ? $modelClass::query ()->findOrFail ($id) : new $modelClass;
-    if ($path === '')
-      $this->model = $model;
-    else setAt ($this->model, $path, $model);
-    return $model;
-  }
-
-  function loadRequested ($modelClass, $modelName = '', $param = 'id')
-  {
-    return $this->loadModel ($modelClass, $modelName, $this->request->getAttribute ("@$param"));
-  }
-
-  function save ($model, array $options = [])
-  {
-    if ($model instanceof Model)
-      return $this->model->save ($options);
-    return false;
   }
 
   protected function beginTransaction ()
@@ -52,9 +29,34 @@ class ModelController extends BaseModelConroller
     $this->db->connection ()->commit ();
   }
 
+  function loadData ($collection, $subModelPath = '', $id = null, $primaryKey = 'id')
+  {
+    // Does nothing; no low-level database access support on this implementation.
+  }
+
+  function loadModel ($modelClass, $subModelPath = '', $id = null)
+  {
+    $id                = $this->requestedId ?: $id;
+    $this->requestedId = $id;
+
+    /** @var Model $modelClass */
+    $model = exists ($id) ? $modelClass::query ()->findOrFail ($id) : new $modelClass;
+    if ($subModelPath === '')
+      $this->model = $model;
+    else setAt ($this->model, $subModelPath, $model);
+    return $model;
+  }
+
   protected function rollback ()
   {
     $this->db->connection ()->rollBack ();
+  }
+
+  function save ($model, array $options = [])
+  {
+    if ($model instanceof Model)
+      return $this->model->save ($options);
+    return false;
   }
 
 }
