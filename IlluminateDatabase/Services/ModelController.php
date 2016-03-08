@@ -55,8 +55,8 @@ class ModelController extends AbstractModelController
   function save ($model, array $options = [])
   {
     if ($model instanceof Model)
-      return $this->model->save ($options);
-    return false;
+      return $model->save ($options);
+    return null;
   }
 
 }
