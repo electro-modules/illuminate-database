@@ -2,9 +2,9 @@
 namespace Selenia\Plugins\IlluminateDatabase\Config;
 
 use Illuminate\Events\Dispatcher;
-use Selenia\Interfaces\InjectorInterface;
+use Selenia\Interfaces\DI\InjectorInterface;
+use Selenia\Interfaces\DI\ServiceProviderInterface;
 use Selenia\Interfaces\ModelControllerInterface;
-use Selenia\Interfaces\ServiceProviderInterface;
 use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
 use Selenia\Plugins\IlluminateDatabase\Services\ModelController;
 
