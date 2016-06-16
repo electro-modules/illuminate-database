@@ -1,12 +1,13 @@
 {
-  "name": "selenia-plugins/illuminate-database",
-  "description": "Integrates the Illuminate Database Laravel Component into the Selenia framework",
-  "type": "selenia-plugin",
+  "name": "electro-modules/illuminate-database",
+  "description": "Integrates the Laravel's Illuminate Database Component into the Electro framework",
+  "type": "electro-plugin",
   "keywords": [
     "plugin",
-    "selenia"
+    "electro"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/electro-modules/illuminate-database",
   "authors": [
     {
       "name": "Impactwave",
@@ -20,7 +21,7 @@
   ],
   "require": {
     "php": ">=5.6",
-    "selenia/interop": "dev-master",
+    "electro/interop": "dev-master",
     "illuminate/database": "^5.2.7",
     "illuminate/events": "^5.2.7",
     "php-kit/ext-pdo": "dev-master"
