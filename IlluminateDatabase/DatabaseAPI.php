@@ -1,5 +1,5 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase;
+namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
 use PhpKit\ConnectionInterface;
@@ -14,11 +14,11 @@ use PhpKit\ConnectionInterface;
  * - `DB::method()`     - equivalent to `$this->query()->method()`
  * - `Schema::method()` - equivalent to `$this->schema()->method()`
  *
- * > **Note:** being an anti-pattern, facades are not recommended for development with Selenia.
+ * > **Note:** being an anti-pattern, facades are not recommended for development with Electro.
  * <p><br>
  * > **Note:** be sure to import the related namespaces before using the facades:
- * > - `use Selenia\Plugins\IlluminateDatabase\DB;`
- * > - `use Selenia\Plugins\IlluminateDatabase\Schema;`
+ * > - `use Electro\Plugins\IlluminateDatabase\DB;`
+ * > - `use Electro\Plugins\IlluminateDatabase\Schema;`
  *
  * > **Note:** facades require a global shared context, so remember to inject an instance of this class before using any
  * of them. You don't need to use the injected instance, but just by injecting it, you'll setup the required global
@@ -32,7 +32,7 @@ use PhpKit\ConnectionInterface;
  * ###### Ex:
  *
  * ```
- * use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
+ * use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
  *
  * class MyClass {
  *    // you must inject an instance of DatabaseAPI before using Eloquent.

@@ -1,9 +1,9 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase;
+namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Selenia\Traits\InspectionTrait;
+use Electro\Traits\InspectionTrait;
 
 /**
  * @method static Model|Collection find($id,array $columns=['*']) Find a model by its primary key.

@@ -1,10 +1,10 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase\Services;
+namespace Electro\Plugins\IlluminateDatabase\Services;
 
 use Illuminate\Database\Eloquent\Model;
-use Selenia\Database\Lib\AbstractModelController;
-use Selenia\Interfaces\SessionInterface;
-use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
+use Electro\Database\Lib\AbstractModelController;
+use Electro\Interfaces\SessionInterface;
+use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 
 class ModelController extends AbstractModelController
 {

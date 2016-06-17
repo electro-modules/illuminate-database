@@ -1,5 +1,5 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase;
+namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
 

@@ -1,12 +1,12 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase\Config;
+namespace Electro\Plugins\IlluminateDatabase\Config;
 
 use Illuminate\Events\Dispatcher;
-use Selenia\Interfaces\DI\InjectorInterface;
-use Selenia\Interfaces\DI\ServiceProviderInterface;
-use Selenia\Interfaces\ModelControllerInterface;
-use Selenia\Plugins\IlluminateDatabase\DatabaseAPI;
-use Selenia\Plugins\IlluminateDatabase\Services\ModelController;
+use Electro\Interfaces\DI\InjectorInterface;
+use Electro\Interfaces\DI\ServiceProviderInterface;
+use Electro\Interfaces\ModelControllerInterface;
+use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
+use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 
 class IlluminateDatabaseModule implements ServiceProviderInterface
 {

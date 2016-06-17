@@ -1,13 +1,13 @@
 <?php
-namespace Selenia\Plugins\IlluminateDatabase;
+namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Query\Builder;
 use Phinx\Migration\AbstractMigration;
 use PhpKit\Connection;
-use Selenia\Database\Lib\DbUtil;
+use Electro\Database\Lib\DbUtil;
 
 /**
- * Integrates Illuminate Database with Phinx migrations to allow the developer to create migrations on Selenia using
+ * Integrates Illuminate Database with Phinx migrations to allow the developer to create migrations on Electro using
  * Illuminate's schema builder, query builder and Eloquent.
  */
 class Migration extends AbstractMigration
