@@ -97,7 +97,7 @@ class DatabaseAPI
   /**
    * Returns an instance of the Illuminate Database query builder, bound to a specific table.
    *
-   * @param string $table          Table name,
+   * @param string $table Table name,
    * @param string $connectionName [optional] A connection name, if you want to use a connection other than the default.
    * @return \Illuminate\Database\Query\Builder
    */
@@ -106,7 +106,23 @@ class DatabaseAPI
     return $this->query ($connectionName)->from ($table);
   }
 
-  public function updateMultipleSelection ($table, $field, array $selectedIDs, $pk = 'id', $connectionName = null)
+  public function updateMultipleSelection ($pivotTable, $ownerField, $ownerValue, $valueField, array $values,
+                                           $connectionName = null)
+  {
+    $this->connection ($connectionName)->transaction (function () use (
+      $pivotTable, $ownerField, $ownerValue, $values, $valueField
+    ) {
+      $pivotTable = $this->table ($pivotTable);
+      $pivotTable->where ($ownerField, $ownerValue)->delete ();
+      foreach ($values as $v)
+        $pivotTable->insert ([
+          $ownerField => $ownerValue,
+          $valueField => $v
+        ]);
+    });
+  }
+
+  public function updateMultipleSelectionBool ($table, $field, array $selectedIDs, $pk = 'id', $connectionName = null)
   {
     $this->connection ($connectionName)->transaction (function () use ($table, $field, $selectedIDs, $pk) {
       $table = $this->table ($table);
