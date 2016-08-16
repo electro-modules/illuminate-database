@@ -17,9 +17,20 @@ workman module:install-plugin electro-modules/illuminate-database
 
 > For correct operation, do not install this package directly with Composer.
 
-### Documentation
+## Migrations
 
-For more information about this plugin, please refer to the [framework's documentation](http://electro-framework.github.io).
+### Available commands
+
+Command              | Description
+---------------------|--------------------------------------------------------------------------
+`make:migration`     | Create a new migration for the specified module.
+`migration:up`       | Migrate the database for the specified module,
+`migration:down`     | Rollback the last migration or a specific one, for the specified module.
+`migration:status`   | Show migration status for the specified module.
+
+You can also type `workman` on the terminal to get a list of available commands.
+
+Type `worman help migration:xxx` (where `xxx` is the command name) to know which arguments and options each command supports.
 
 ## License
 

@@ -21,5 +21,4 @@ class Migration extends AbstractMigration
     $this->db->manager->bootEloquent ();
   }
 
-
 }
