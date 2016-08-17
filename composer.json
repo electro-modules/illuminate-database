@@ -24,8 +24,7 @@
     "electro/interop": "dev-master",
     "illuminate/database": "^5.2.7",
     "illuminate/events": "^5.2.7",
-    "php-kit/ext-pdo": "dev-master",
-    "robmorgan/phinx": "^0.6.4"
+    "php-kit/ext-pdo": "dev-master"
   },
   "autoload": {
     "psr-4": {
