@@ -4,11 +4,13 @@ namespace Electro\Plugins\IlluminateDatabase\Config;
 use Electro\Core\Assembly\Services\ModuleServices;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\DI\ServiceProviderInterface;
+use Electro\Interfaces\MigrationsInterface;
 use Electro\Interfaces\ModelControllerInterface;
 use Electro\Interfaces\ModuleInterface;
+use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Migrations\Commands\MigrationCommands;
 use Electro\Plugins\IlluminateDatabase\Migrations\Config\MigrationsSettings;
-use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
+use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 use Illuminate\Events\Dispatcher;
 
@@ -30,7 +32,8 @@ class IlluminateDatabaseModule implements ServiceProviderInterface, ModuleInterf
       })
       ->alias (ModelControllerInterface::class, ModelController::class)
       ->share (ModelController::class)
-      ->share (MigrationsSettings::class);
+      ->share (MigrationsSettings::class)
+      ->alias (MigrationsInterface::class, Migrations::class);
   }
 
 }
