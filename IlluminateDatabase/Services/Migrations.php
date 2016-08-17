@@ -83,7 +83,7 @@ class Migrations implements MigrationsInterface
   function status ($onlyPending = false)
   {
     $this->assertModuleIsSet ();
-    $all = $this->getTable ()->orderBy (Migration::date)->get ();
+    $all = $this->computeDiff ();
     return $onlyPending ? array_findAll ($all, Migration::status, Migration::DOWN) : $all;
   }
 
@@ -95,9 +95,9 @@ class Migrations implements MigrationsInterface
 
   private function computeDiff ()
   {
-    $files                 = $this->getAllFiles ();
-    $projectMigrationDates = map ($files, function ($path) { return str_segmentsFirst ($path, '_'); });
-    $dbMigrations          = $this->getAll ();
+    $files        = $this->getAllFiles ();
+    $dbMigrations = $this->getAll ();
+    return $files;
   }
 
   private function createMigrationsTableIfRequired ()
@@ -117,7 +117,10 @@ class Migrations implements MigrationsInterface
 
   private function getAll ()
   {
-    return $this->getTable ()->orderBy (Migration::date)->get ();
+    return map ($this->getTable ()->orderBy (Migration::date)->get (), function ($rec, &$i) {
+      $i = $rec[Migration::date];
+      return $rec;
+    });
   }
 
   /**
@@ -126,7 +129,7 @@ class Migrations implements MigrationsInterface
   private function getAllFiles ()
   {
     return FilesystemFlow::glob ("{$this->migrationsPath}/*.php")->keys ()->sort ()->map (function ($path, &$i) {
-      $i = str_segmentsFirst ($path, '_');
+      $i = str_segmentsFirst (basename ($path), '_');
       return $path;
     })->all ();
   }
