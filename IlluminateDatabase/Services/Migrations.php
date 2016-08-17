@@ -5,8 +5,8 @@ use Electro\Core\Assembly\ModuleInfo;
 use Electro\Core\Assembly\Services\ModulesRegistry;
 use Electro\Interfaces\MigrationsInterface;
 use Electro\Interop\MigrationStruct as Migration;
+use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
-use Electro\Plugins\IlluminateDatabase\Migrations\Config\MigrationsSettings;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Schema\Blueprint;
 use PhpKit\Flow\FilesystemFlow;
@@ -93,20 +93,42 @@ class Migrations implements MigrationsInterface
       throw new \RuntimeException("Target module is not set");
   }
 
+  private function computeDiff ()
+  {
+    $files                 = $this->getAllFiles ();
+    $projectMigrationDates = map ($files, function ($path) { return str_segmentsFirst ($path, '_'); });
+    $dbMigrations          = $this->getAll ();
+  }
+
   private function createMigrationsTableIfRequired ()
   {
     $schema = $this->databaseAPI->schema ();
     if (!$schema->hasTable (self::MIGRATIONS_TABLE))
       $schema->create (self::MIGRATIONS_TABLE, function (Blueprint $table) {
-        $table->increments (Migration::id);
         $table->string (Migration::date, 14);
         $table->string (Migration::module, 64);
         $table->string (Migration::name, 128);
         $table->string (Migration::status, 4);
         $table->string (Migration::reverse, 1024);
-        $table->index (Migration::date);
+        $table->primary (Migration::date);
         $table->index (Migration::module);
       });
+  }
+
+  private function getAll ()
+  {
+    return $this->getTable ()->orderBy (Migration::date)->get ();
+  }
+
+  /**
+   * @return string[]
+   */
+  private function getAllFiles ()
+  {
+    return FilesystemFlow::glob ("{$this->migrationsPath}/*.php")->keys ()->sort ()->map (function ($path, &$i) {
+      $i = str_segmentsFirst ($path, '_');
+      return $path;
+    })->all ();
   }
 
   /**
@@ -115,14 +137,6 @@ class Migrations implements MigrationsInterface
   private function getTable ()
   {
     return $this->databaseAPI->table (self::MIGRATIONS_TABLE)->where (Migration::module, $this->module->name);
-  }
-
-  /**
-   * @return string[]
-   */
-  private function getAllFiles ()
-  {
-    return FilesystemFlow::glob("{$this->migrationsPath}/*.php")->keys()->sort()->all ();
   }
 
 }

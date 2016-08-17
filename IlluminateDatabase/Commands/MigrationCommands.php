@@ -1,14 +1,13 @@
 <?php
-namespace Electro\Plugins\IlluminateDatabase\Migrations\Commands;
+namespace Electro\Plugins\IlluminateDatabase\Commands;
 
 use Electro\Core\Assembly\ModuleInfo;
 use Electro\Core\Assembly\Services\ModulesRegistry;
 use Electro\Core\ConsoleApplication\Lib\ModulesUtil;
 use Electro\Core\ConsoleApplication\Services\ConsoleIO;
-use Electro\Plugins\IlluminateDatabase\Migrations\Config\MigrationsSettings;
+use Electro\Interfaces\MigrationsInterface;
+use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
-use Phinx\Console\Command;
-use Phinx\Console\Command\AbstractCommand;
 use Robo\Config;
 use Symfony\Component\Console\Application as SymfonyConsole;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -22,46 +21,28 @@ use Symfony\Component\Console\Output\OutputInterface;
 class MigrationCommands
 {
   /**
-   * @var string Used internally to pass information to config.php
-   */
-  static $migrationsPath;
-  /**
-   * @var string Used internally to pass information to config.php
-   */
-  static $migrationsTable;
-  /**
-   * @var string Used internally to pass information to config.php
-   */
-  static $seedsPath;
-  /**
-   * @var SymfonyConsole
-   */
-  private $console;
-  /**
    * @var ConsoleIO
    */
   private $io;
+  /**
+   * @var MigrationsInterface
+   */
+  private $migrationsAPI;
   /**
    * @var ModulesUtil
    */
   private $modulesUtil;
   /**
-   * @var ModulesRegistry
-   */
-  private $registry;
-  /**
    * @var MigrationsSettings
    */
   private $settings;
 
-  function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesRegistry $registry,
-                        ModulesUtil $modulesUtil, SymfonyConsole $console)
+  function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil, MigrationsInterface $migrationsAPI)
   {
     $this->io          = $io;
-    $this->registry    = $registry;
     $this->modulesUtil = $modulesUtil;
-    $this->console     = $console;
     $this->settings    = $settings;
+    $this->migrationsAPI = $migrationsAPI;
   }
 
   static protected function getConfigPath ()
@@ -271,30 +252,8 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    $command = new Command\Status;
-    $command->setApplication ($this->console);
-    $input = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      '--format'        => $options['format'],
-      '--environment'   => 'main',
-      $moduleName,
-    ])->prune ()->A);
-    return $this->runMigrationCommand ($command, $input);
-  }
-
-  /**
-   * Sets the migrations folder path for subsequent commands.
-   *
-   * @param string $moduleName vendor-name/package-name
-   */
-  protected function setupMigrationConfig ($moduleName)
-  {
-    $module                = $this->registry->getModule ($moduleName);
-    $short                 = $module->getShortName ();
-    $uid                   = substr (md5 ($module->name), 0, 4);
-    self::$migrationsTable = sprintf ('_%s_migrations_%s', strtolower (dehyphenate ($short)), $uid);
-    self::$migrationsPath  = $module->path . '/' . $this->settings->migrationsPath ();
-    self::$seedsPath       = $module->path . '/' . $this->settings->seedsPath ();
+    $migrations = $this->migrationsAPI->status();
+    var_dump ($migrations);
   }
 
   private function runMigrationCommand (AbstractCommand $command, InputInterface $input)
@@ -319,7 +278,7 @@ class MigrationCommands
   private function setupModule (&$moduleName)
   {
     $this->modulesUtil->selectModule ($moduleName, function (ModuleInfo $module) { return $module->enabled; });
-    $this->setupMigrationConfig ($moduleName);
+    $this->migrationsAPI->module ($moduleName);
   }
 
   private function suppressHeader ($text)

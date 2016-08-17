@@ -1,5 +1,5 @@
 <?php
-namespace Electro\Plugins\IlluminateDatabase\Migrations\Config;
+namespace Electro\Plugins\IlluminateDatabase\Config;
 
 use Electro\Interfaces\AssignableInterface;
 use Electro\Traits\ConfigurationTrait;

@@ -1,5 +1,5 @@
 <?php
-use Electro\Plugins\IlluminateDatabase\Migrations\Commands\MigrationCommands;
+use Electro\Plugins\IlluminateDatabase\Commands\MigrationCommands;
 
 return [
   "paths"        => [
