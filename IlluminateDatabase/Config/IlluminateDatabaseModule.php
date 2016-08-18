@@ -4,7 +4,7 @@ namespace Electro\Plugins\IlluminateDatabase\Config;
 use Electro\Core\Assembly\Services\ModuleServices;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\DI\ServiceProviderInterface;
-use Electro\Interfaces\MigrationsInterface;
+use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interfaces\ModelControllerInterface;
 use Electro\Interfaces\ModuleInterface;
 use Electro\Plugins\IlluminateDatabase\Commands\MigrationCommands;

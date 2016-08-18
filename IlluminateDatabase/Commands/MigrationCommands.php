@@ -2,18 +2,11 @@
 namespace Electro\Plugins\IlluminateDatabase\Commands;
 
 use Electro\Core\Assembly\ModuleInfo;
-use Electro\Core\Assembly\Services\ModulesRegistry;
 use Electro\Core\ConsoleApplication\Lib\ModulesUtil;
 use Electro\Core\ConsoleApplication\Services\ConsoleIO;
-use Electro\Interfaces\MigrationsInterface;
+use Electro\Interfaces\Migrations\MigrationsInterface;
+use Electro\Interop\MigrationStruct as Migration;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
-use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
-use Robo\Config;
-use Symfony\Component\Console\Application as SymfonyConsole;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Database migration commands.
@@ -37,24 +30,17 @@ class MigrationCommands
    */
   private $settings;
 
-  function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil, MigrationsInterface $migrationsAPI)
+  function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil,
+                        MigrationsInterface $migrationsAPI)
   {
-    $this->io          = $io;
-    $this->modulesUtil = $modulesUtil;
-    $this->settings    = $settings;
+    $this->io            = $io;
+    $this->modulesUtil   = $modulesUtil;
+    $this->settings      = $settings;
     $this->migrationsAPI = $migrationsAPI;
-  }
-
-  static protected function getConfigPath ()
-  {
-    return updir (__DIR__, 2) . '/config.php';
   }
 
   /**
    * Create a new database migration
-   *
-   * Note: if the Illuminate Database plugin is installed, the generated migration will use its schema builder instead
-   * of the one from Phinx.
    *
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
@@ -73,27 +59,8 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    while (!$name) {
-      $name = str_camelize ($this->io->ask ("Migration description:"), true);
-    }
-    $template = $options['template'];
-    $class    = $options['class'];
-    if (!$template && !$class) {
-      if (class_exists (DatabaseAPI::class))
-        $template = sprintf ('%s/templates/IlluminateMigration%s.php.template', updir (__DIR__, 2),
-          $options['no-doc'] ? '-nodoc' : '');
-    }
-    $command = new Command\Create;
-    $command->setApplication ($this->console);
-    $input = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      'name'            => $name,
-      '--class'         => $class,
-      '--template'      => $template,
-      $moduleName,
-    ])->prune ()->A);
-    $input->setInteractive (false);
-    return $this->runMigrationCommand ($command, $input);
+
+    return 0;
   }
 
   /**
@@ -108,18 +75,8 @@ class MigrationCommands
   function makeSeeder ($moduleName = null, $name = null)
   {
     $this->setupModule ($moduleName);
-    while (!$name) {
-      $name = str_camelize ($this->io->ask ("Seeder name:"), true);
-    }
-    $command = new Command\SeedCreate;
-    $command->setApplication ($this->console);
-    $input = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      'name'            => $name,
-      $moduleName,
-    ])->prune ()->A);
-    $input->setInteractive (false);
-    return $this->runMigrationCommand ($command, $input);
+
+    return 0;
   }
 
   /**
@@ -136,16 +93,8 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    $command = new Command\Migrate;
-    $command->setApplication ($this->console);
-    $input  = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      '--target'        => get ($options, 'target'),
-      '--environment'   => 'main',
-      $moduleName,
-    ])->prune ()->A);
-    $status = $this->runMigrationCommand ($command, $input);
-    return $status;
+    $this->migrationsAPI->migrate ($options['target']);
+    return 0;
   }
 
   /**
@@ -154,11 +103,13 @@ class MigrationCommands
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
    * @param array  $options
-   * @option $seed|The version number to migrate to
+   * @option $seed When specified, runs the seeder after the migration
+   * @option $seeder|s The name of the seeder (in camel case)
    * @return int Status code
    */
   function migrateRefresh ($moduleName = null, $options = [
-    '--seed' => null,
+    '--seed'   => null,
+    'seeder|s' => 'Seeder',
   ])
   {
     $this->setupModule ($moduleName);
@@ -167,7 +118,7 @@ class MigrationCommands
     $r = $this->migrate ($moduleName);
     if ($r) return $r;
     if ($options['seed'])
-      ; //TODO run seeders
+      return $this->migrateSeed ($moduleName, $options);
     return 0;
   }
 
@@ -200,17 +151,8 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    $command = new Command\Rollback;
-    $command->setApplication ($this->console);
-    $input  = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      '--target'        => get ($options, 'target'),
-      '--date'          => get ($options, 'date'),
-      '--environment'   => 'main',
-      $moduleName,
-    ])->prune ()->A);
-    $status = $this->runMigrationCommand ($command, $input);
-    return $status;
+    $this->migrationsAPI->rollback ($options['target'], $options['date']);
+    return 0;
   }
 
   /**
@@ -223,19 +165,12 @@ class MigrationCommands
    * @return int Status code
    */
   function migrateSeed ($moduleName = null, $options = [
-    'seeder|s' => null,
+    'seeder|s' => 'Seeder',
   ])
   {
     $this->setupModule ($moduleName);
-    $command = new Command\SeedRun;
-    $command->setApplication ($this->console);
-    $input = new ArrayInput(PA ([
-      '--configuration' => self::getConfigPath (),
-      '--environment'   => 'main',
-      '--seed'          => get ($options, 'seeder'),
-      $moduleName,
-    ])->prune ()->A);
-    return $this->runMigrationCommand ($command, $input);
+    $this->migrationsAPI->seed ($options['seeder']);
+    return 0;
   }
 
   /**
@@ -244,27 +179,35 @@ class MigrationCommands
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
    * @param array  $options
-   * @option $format|f      The output format. Allowed values: 'json'. If not specified, text is output.
+   * @option $format|f      The output format. Allowed values: 'json|text'. If not specified, text is output.
    * @return int Status code
    */
   function migrateStatus ($moduleName = null, $options = [
-    'format|f' => '',
+    'format|f' => 'text',
   ])
   {
     $this->setupModule ($moduleName);
-    $migrations = $this->migrationsAPI->status();
-    var_dump ($migrations);
-  }
-
-  private function runMigrationCommand (AbstractCommand $command, InputInterface $input)
-  {
-    /** @var OutputInterface $output */
-    $output = Config::get ('output');
-    $buf    = new BufferedOutput ($output->getVerbosity (), $output->isDecorated (), $output->getFormatter ());
-    $r      = $command->run ($input, $buf);
-    $result = $this->suppressHeader ($buf->fetch ());
-    $output->write ($result);
-    return $r;
+    $migrations   = $this->migrationsAPI->status ();
+    $formattedMig = map ($migrations, function ($mig) {
+      return [
+        Migration::toDateStr ($mig[Migration::date]),
+        $mig[Migration::name],
+        $mig[Migration::status],
+      ];
+    });
+    switch ($options['format']) {
+      case 'json':
+        $this->io->writeln (json_encode (array_values ($migrations), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        break;
+      case 'text':
+        if ($formattedMig)
+          $this->io->table (['Date', 'Name', 'Status'], $formattedMig, [20, 40, 8]);
+        else $this->io->cancel ('The module has no migrations');
+        break;
+      default:
+        $this->io->error ('Invalid format');
+    }
+    return 0;
   }
 
   /**
@@ -279,15 +222,6 @@ class MigrationCommands
   {
     $this->modulesUtil->selectModule ($moduleName, function (ModuleInfo $module) { return $module->enabled; });
     $this->migrationsAPI->module ($moduleName);
-  }
-
-  private function suppressHeader ($text)
-  {
-    /** @var OutputInterface $output */
-    $output = Config::get ('output');
-    return $output->getVerbosity () == OutputInterface::VERBOSITY_NORMAL
-      ? preg_replace ('/^.*?\n\n/s', PHP_EOL, $text)
-      : $text;
   }
 
 }

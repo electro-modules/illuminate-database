@@ -3,7 +3,7 @@ namespace Electro\Plugins\IlluminateDatabase\Services;
 
 use Electro\Core\Assembly\ModuleInfo;
 use Electro\Core\Assembly\Services\ModulesRegistry;
-use Electro\Interfaces\MigrationsInterface;
+use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interop\MigrationStruct as Migration;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
@@ -74,7 +74,7 @@ class Migrations implements MigrationsInterface
 
   }
 
-  function seed ($seeder = null)
+  function seed ($seeder = 'Seeder')
   {
     $this->assertModuleIsSet ();
 
@@ -83,8 +83,8 @@ class Migrations implements MigrationsInterface
   function status ($onlyPending = false)
   {
     $this->assertModuleIsSet ();
-    $all = $this->computeDiff ();
-    return $onlyPending ? array_findAll ($all, Migration::status, Migration::DOWN) : $all;
+    $all = $this->buildMigrationsList ();
+    return $onlyPending ? array_findAll ($all, Migration::status, Migration::PENDING) : $all;
   }
 
   private function assertModuleIsSet ()
@@ -93,11 +93,21 @@ class Migrations implements MigrationsInterface
       throw new \RuntimeException("Target module is not set");
   }
 
-  private function computeDiff ()
+  private function buildMigrationsList ()
   {
-    $files        = $this->getAllFiles ();
-    $dbMigrations = $this->getAll ();
-    return $files;
+    $files        = $this->getProjectMigrations ();
+    $dbMigrations = $this->getLoggedMigrations ();
+    $pendingMig   = array_diff_key ($files, $dbMigrations);
+    $goneMig      = array_diff_key ($dbMigrations, $files);
+    $migrations   = map ($pendingMig + $goneMig, function ($mig, $date) use ($pendingMig, $goneMig) {
+      if (isset($pendingMig[$date]))
+        $mig[Migration::status] = Migration::PENDING;
+      elseif (isset($goneMig[$date]))
+        $mig[Migration::status] = Migration::GONE;
+      else $mig[Migration::status] = Migration::DONE;
+      return $mig;
+    });
+    return $migrations;
   }
 
   private function createMigrationsTableIfRequired ()
@@ -115,7 +125,7 @@ class Migrations implements MigrationsInterface
       });
   }
 
-  private function getAll ()
+  private function getLoggedMigrations ()
   {
     return map ($this->getTable ()->orderBy (Migration::date)->get (), function ($rec, &$i) {
       $i = $rec[Migration::date];
@@ -126,11 +136,16 @@ class Migrations implements MigrationsInterface
   /**
    * @return string[]
    */
-  private function getAllFiles ()
+  private function getProjectMigrations ()
   {
     return FilesystemFlow::glob ("{$this->migrationsPath}/*.php")->keys ()->sort ()->map (function ($path, &$i) {
       $i = str_segmentsFirst (basename ($path), '_');
-      return $path;
+      return [
+        Migration::date    => $i,
+        Migration::name    => Migration::nameFromFilename ($path),
+        Migration::module  => $this->module->name,
+        Migration::path    => $path
+      ];
     })->all ();
   }
 

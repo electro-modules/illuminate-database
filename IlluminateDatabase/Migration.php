@@ -1,14 +1,16 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase;
 
-use Phinx\Migration\AbstractMigration;
+use Electro\Interfaces\Migrations\MigrationInterface;
 use PhpKit\Connection;
 
 /**
- * Integrates Illuminate Database with Phinx migrations to allow the developer to create migrations on Electro using
- * Illuminate's schema builder, query builder and Eloquent.
+ * Provides a base class for migrations that use the Illuminate Database library.
+ *
+ * <p>It allows the developer to create migrations on Electro using Illuminate's schema builder, query builder and
+ * Eloquent.
  */
-class Migration extends AbstractMigration
+abstract class Migration implements MigrationInterface
 {
   /** @var DatabaseAPI */
   protected $db;
