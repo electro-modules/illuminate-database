@@ -99,7 +99,9 @@ class MigrationCommands
     $out     = $this->migrationsAPI->migrate ($options['target'], $pretend);
     if ($pretend)
       $this->io->writeln ($out);
-    else $out ? $this->io->done ('<info>Migrated successfully</info>') : $this->io->warn ("Nothing to migrate")->done ();
+    else $out ? $this->io->done (sprintf ('<info>%s performed successfully</info>',
+      simplePluralize ($out, 'migration')))
+      : $this->io->warn ("Nothing to migrate")->done ();
     return 0;
   }
 
@@ -138,7 +140,7 @@ class MigrationCommands
   function migrateReset ($moduleName = null)
   {
     $this->setupModule ($moduleName);
-    return $this->migrateRollback ($moduleName, ['target' => 0]);
+    return $this->migrateRollback ($moduleName, ['target' => 0, 'date' => null, 'pretend' => false]);
   }
 
   /**
@@ -163,7 +165,9 @@ class MigrationCommands
     $out     = $this->migrationsAPI->rollBack ($options['target'], $options['date'], $pretend);
     if ($pretend)
       $this->io->writeln ($out);
-    else $out ? $this->io->done ('<info>Rolled back successfully</info>') : $this->io->warn ("Nothing to rollback")->done ();
+    else $out ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>',
+      simplePluralize ($out, 'migration')))
+      : $this->io->warn ("Nothing to roll back")->done ();
     return 0;
   }
 

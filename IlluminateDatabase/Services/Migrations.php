@@ -165,16 +165,7 @@ class Migrations implements MigrationsInterface
   private function extractMigrationSQL ($path, $method = 'up')
   {
     $migrator  = $this->loadMigrationClass ($path);
-    $queries   = map ($this->databaseAPI->connection ()->pretend (function () use ($migrator, $method) {
-      $migrator->$method ();
-    }), function (array $info) {
-      $bindings = $info['bindings'];
-      return preg_replace_callback ('/\?/', function () use (&$bindings) {
-        $v = current ($bindings);
-        next ($bindings);
-        return $this->quote ($v);
-      }, $info['query']);
-    });
+    $queries   = $method == 'up' ? $migrator->getUpQueries () : $migrator->getDownQueries ();
     $queries[] = ''; // Appends a ; to the last query.
     return implode (self::QUERY_DELIMITER, $queries);
   }
@@ -260,11 +251,6 @@ class Migrations implements MigrationsInterface
       $sql .= $this->formatQueryBlock ($migration[Migration::name], implode (self::QUERY_DELIMITER, $queries));
     }
     return $sql;
-  }
-
-  private function quote ($str)
-  {
-    return $this->databaseAPI->connection ()->getPdo ()->quote ($str);
   }
 
   private function rollBackMigrations (array $migrations)
