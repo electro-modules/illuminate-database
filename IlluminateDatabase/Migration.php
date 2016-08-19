@@ -1,8 +1,8 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase;
 
+use Electro\Interfaces\ConsoleIOInterface;
 use Electro\Interfaces\Migrations\MigrationInterface;
-use PhpKit\Connection;
 
 /**
  * Provides a base class for migrations that use the Illuminate Database library.
@@ -14,13 +14,13 @@ abstract class Migration implements MigrationInterface
 {
   /** @var DatabaseAPI */
   protected $db;
+  /** @var ConsoleIOInterface */
+  protected $output;
 
-  protected function init ()
+  public function __construct (DatabaseAPI $db, ConsoleIOInterface $consoleIO)
   {
-    $con      = (new Connection)->getFromEnviroment ();
-    $this->db = new DatabaseAPI ($con);
-    $this->db->manager->setAsGlobal ();
-    $this->db->manager->bootEloquent ();
+    $this->db     = $db;
+    $this->output = $consoleIO;
   }
 
 }

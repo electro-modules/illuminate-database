@@ -86,14 +86,20 @@ class MigrationCommands
    *                           If not specified, the user will be prompted for it
    * @param array  $options
    * @option $target|t The version number to migrate to
+   * @option $pretend|p Do not actually run the migration, just output the SQL code that would be executed
    * @return int Status code
    */
   function migrate ($moduleName = null, $options = [
-    'target|t' => null,
+    'target|t'  => null,
+    'pretend|p' => false,
   ])
   {
     $this->setupModule ($moduleName);
-    $this->migrationsAPI->migrate ($options['target']);
+    $pretend = $options['pretend'];
+    $out     = $this->migrationsAPI->migrate ($options['target'], $pretend);
+    if ($pretend)
+      $this->io->writeln ($out);
+    else $out ? $this->io->done ('<info>Migrated successfully</info>') : $this->io->warn ("Nothing to migrate")->done ();
     return 0;
   }
 
@@ -143,15 +149,21 @@ class MigrationCommands
    * @param array  $options
    * @option $target|t The version number to rollback to
    * @option $date|d   The date to rollback to
+   * @option $pretend|p Do not actually run the migration, just output the SQL code that would be executed
    * @return int Status code
    */
   function migrateRollback ($moduleName = null, $options = [
-    'target|t' => null,
-    'date|d'   => null,
+    'target|t'  => null,
+    'date|d'    => null,
+    'pretend|p' => false,
   ])
   {
     $this->setupModule ($moduleName);
-    $this->migrationsAPI->rollback ($options['target'], $options['date']);
+    $pretend = $options['pretend'];
+    $out     = $this->migrationsAPI->rollBack ($options['target'], $options['date'], $pretend);
+    if ($pretend)
+      $this->io->writeln ($out);
+    else $out ? $this->io->done ('<info>Rolled back successfully</info>') : $this->io->warn ("Nothing to rollback")->done ();
     return 0;
   }
 
@@ -190,6 +202,7 @@ class MigrationCommands
     $migrations   = $this->migrationsAPI->status ();
     $formattedMig = map ($migrations, function ($mig) {
       return [
+        $mig[Migration::date],
         Migration::toDateStr ($mig[Migration::date]),
         $mig[Migration::name],
         $mig[Migration::status],
@@ -201,7 +214,7 @@ class MigrationCommands
         break;
       case 'text':
         if ($formattedMig)
-          $this->io->table (['Date', 'Name', 'Status'], $formattedMig, [20, 40, 8]);
+          $this->io->table (['Version', 'Date', 'Name', 'Status'], $formattedMig, [15, 20, 40, 8]);
         else $this->io->cancel ('The module has no migrations');
         break;
       default:
