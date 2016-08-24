@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * <p>It allows the developer to create migrations on Electro using Illuminate's schema builder, query builder and
  * Eloquent.
  */
-abstract class Migration implements MigrationInterface
+abstract class AbstractMigration implements MigrationInterface
 {
   /** @var DatabaseAPI */
   protected $db;

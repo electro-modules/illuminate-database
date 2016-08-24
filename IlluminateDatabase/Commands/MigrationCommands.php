@@ -95,13 +95,13 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    $pretend = $options['pretend'];
-    $out     = $this->migrationsAPI->migrate ($options['target'], $pretend);
+    $pretend = get ($options, 'pretend');
+    $out     = $this->migrationsAPI->migrate (get ($options, 'target'), $pretend);
     if ($pretend)
       $this->io->writeln ($out);
-    else $out ? $this->io->done (sprintf ('<info>%s performed successfully</info>',
-      simplePluralize ($out, 'migration')))
-      : $this->io->warn ("Nothing to migrate")->done ();
+    else $out
+      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'migration')), true)
+      : $this->io->warn ("Nothing to migrate")->done (true);
     return 0;
   }
 
@@ -116,16 +116,16 @@ class MigrationCommands
    * @return int Status code
    */
   function migrateRefresh ($moduleName = null, $options = [
-    '--seed'   => null,
+    '--seed'   => false,
     'seeder|s' => 'Seeder',
   ])
   {
     $this->setupModule ($moduleName);
-    $r = $this->migrateRollback ($moduleName, ['target' => 0]);
+    $r = $this->migrateReset ($moduleName);
     if ($r) return $r;
     $r = $this->migrate ($moduleName);
     if ($r) return $r;
-    if ($options['seed'])
+    if (get ($options, 'seed'))
       return $this->migrateSeed ($moduleName, $options);
     return 0;
   }
@@ -140,7 +140,7 @@ class MigrationCommands
   function migrateReset ($moduleName = null)
   {
     $this->setupModule ($moduleName);
-    return $this->migrateRollback ($moduleName, ['target' => 0, 'date' => null, 'pretend' => false]);
+    return $this->migrateRollback ($moduleName, ['target' => 0]);
   }
 
   /**
@@ -161,13 +161,14 @@ class MigrationCommands
   ])
   {
     $this->setupModule ($moduleName);
-    $pretend = $options['pretend'];
-    $out     = $this->migrationsAPI->rollBack ($options['target'], $options['date'], $pretend);
+    $pretend = get ($options, 'pretend');
+    $out     = $this->migrationsAPI->rollBack (get ($options, 'target'), get ($options, 'date'), $pretend);
     if ($pretend)
       $this->io->writeln ($out);
-    else $out ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>',
-      simplePluralize ($out, 'migration')))
-      : $this->io->warn ("Nothing to roll back")->done ();
+    else $out
+      ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>', simplePluralize ($out, 'migration')),
+        true)
+      : $this->io->warn ("Nothing to roll back")->done (true);
     return 0;
   }
 
@@ -178,14 +179,23 @@ class MigrationCommands
    *                           If not specified, the user will be prompted for it
    * @param array  $options
    * @option $seeder|s The name of the seeder (in camel case)
+   * @option $pretend|p Do not actually run the seeder, just output the SQL code that would be executed
    * @return int Status code
    */
   function migrateSeed ($moduleName = null, $options = [
-    'seeder|s' => 'Seeder',
+    'seeder|s'  => 'Seeder',
+    'pretend|p' => false,
   ])
   {
     $this->setupModule ($moduleName);
-    $this->migrationsAPI->seed ($options['seeder']);
+    $pretend = get ($options, 'pretend');
+    $out     = $this->migrationsAPI->seed (get ($options, 'seeder'), $pretend);
+    if ($pretend)
+      $this->io->writeln ($out);
+    else $out
+      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'seeder')),
+        true)
+      : $this->io->warn ("Nothing to seed")->done (true);
     return 0;
   }
 
@@ -212,7 +222,7 @@ class MigrationCommands
         $mig[Migration::status],
       ];
     });
-    switch ($options['format']) {
+    switch (get ($options, 'format', 'text')) {
       case 'json':
         $this->io->writeln (json_encode (array_values ($migrations), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         break;

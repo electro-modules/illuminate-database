@@ -6,6 +6,7 @@ use Electro\Core\Assembly\Services\ModulesRegistry;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\Migrations\MigrationInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
+use Electro\Interfaces\Migrations\SeederInterface;
 use Electro\Interop\MigrationStruct as Migration;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
@@ -107,12 +108,6 @@ class Migrations implements MigrationsInterface
     return $this;
   }
 
-  function reset ()
-  {
-    $this->assertModuleIsSet ();
-
-  }
-
   function rollBack ($target = null, $date = null, $pretend = false)
   {
     $this->assertModuleIsSet ();
@@ -130,10 +125,27 @@ class Migrations implements MigrationsInterface
     return $this->rollBackMigrations ($obsolete) + $this->rollBackMigrations ($done);
   }
 
-  function seed ($seeder = 'Seeder')
+  function seed ($seeder = 'Seeder', $pretend = false)
   {
     $this->assertModuleIsSet ();
+    $seederInstance = $this->loadSeederClass ($seeder);
 
+    // SIMULATE
+
+    if ($pretend) {
+      $queries   = $seederInstance->getQueries ();
+      $queries[] = ''; // Appends a ; to the last query.
+      $sql       = implode (self::QUERY_DELIMITER, $queries);
+      return $this->formatQueryBlock ($seeder, $sql);
+    }
+
+    // SEED
+
+    $this->databaseAPI->connection ()->transaction (function () use ($seederInstance) {
+      $seederInstance->run ();
+    });
+
+    return 1;
   }
 
   function status ($onlyPending = false)
@@ -241,6 +253,23 @@ class Migrations implements MigrationsInterface
         throw new \RuntimeException("Migration file $path doesn't define a class named $class");
     }
     return $this->injector->make ($class);
+  }
+
+  /**
+   * @param string $seeder The class name, which should equals the file name.
+   * @return SeederInterface
+   */
+  private function loadSeederClass ($seeder)
+  {
+    if (!class_exists ($seeder, false)) {
+      $path = "$this->seedsPath/$seeder.php";
+      if (!file_exists ($path))
+        throw new \RuntimeException("Migration file $path was not found");
+      require $path;
+      if (!class_exists ($seeder, false))
+        throw new \RuntimeException("Migration file $path doesn't define a class named $seeder");
+    }
+    return $this->injector->make ($seeder);
   }
 
   private function pretendRollBackMigrations (array $migrations)
