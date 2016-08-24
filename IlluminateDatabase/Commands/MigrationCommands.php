@@ -168,7 +168,7 @@ class MigrationCommands
     else $out
       ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>', simplePluralize ($out, 'migration')),
         true)
-      : $this->io->warn ("Nothing to roll back")->done (true);
+      : $this->io->warn ("Nothing to roll back")->done ('', true);
     return 0;
   }
 
