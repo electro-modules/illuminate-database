@@ -52,10 +52,10 @@ class ModelController extends AbstractModelController
     $this->db->connection ()->rollBack ();
   }
 
-  function save ($model, array $options = [])
+  function save ($model)
   {
     if ($model instanceof Model)
-      return $model->save ($options);
+      return $model->push ();
     return null;
   }
 
