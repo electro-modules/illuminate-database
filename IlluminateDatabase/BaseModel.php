@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 
 /**
  * @method static Model|Collection find($id, array $columns = ['*']) Find a model by its primary key.
@@ -63,6 +64,13 @@ class BaseModel extends Model
           if (!$model->push ()) return false;
         }
         elseif ($relation instanceof HasOneOrMany) {
+          $fkey = $relation->getPlainForeignKey ();
+          $model->setAttribute ($fkey, $relation->getParentKey());
+          if ($relation instanceof  MorphOneOrMany) {
+            $mt = $relation->getPlainMorphType();
+            $m = $relation->getMorphClass();
+            $model->setAttribute ($mt, $m);
+          }
           $model->push ();
           if (!$relation->save ($model)) return false;
         }
