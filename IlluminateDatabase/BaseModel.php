@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * @method static Model|Collection find($id, array $columns = ['*']) Find a model by its primary key.
@@ -89,10 +90,14 @@ class BaseModel extends Model
   public function setAttribute ($key, $value)
   {
     // Check if key is actually a relationship
+    /** @var Relation $relation */
     if (method_exists ($this, $key) && ($relation = $this->$key())) {
       // Convert arrays to instances of the correct model
-      if (is_array ($value))
-        $value = $relation->getRelated ()->newInstance ($value);
+      if (is_array ($value)) {
+        if (isset($value[0]) && is_scalar($value[0])) {
+        }
+        else $value = $relation->getRelated ()->newInstance ($value);
+      }
 
       if ($relation instanceof BelongsTo) {
         $relation->associate ($value);
