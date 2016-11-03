@@ -1,13 +1,13 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase\Services;
 
-use Electro\Core\Assembly\ModuleInfo;
-use Electro\Core\Assembly\Services\ModulesRegistry;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\Migrations\MigrationInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interfaces\Migrations\SeederInterface;
 use Electro\Interop\MigrationStruct as Migration;
+use Electro\Kernel\Lib\ModuleInfo;
+use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Illuminate\Database\Query\Builder;

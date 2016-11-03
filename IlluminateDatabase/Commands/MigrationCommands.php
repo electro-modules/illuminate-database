@@ -1,11 +1,11 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase\Commands;
 
-use Electro\Core\Assembly\ModuleInfo;
-use Electro\Core\ConsoleApplication\Lib\ModulesUtil;
-use Electro\Core\ConsoleApplication\Services\ConsoleIO;
+use Electro\ConsoleApplication\Lib\ModulesUtil;
+use Electro\ConsoleApplication\Services\ConsoleIO;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interop\MigrationStruct as Migration;
+use Electro\Kernel\Lib\ModuleInfo;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 
 /**

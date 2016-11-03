@@ -1,20 +1,20 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase\Config;
 
-use Electro\Core\Assembly\ModuleInfo;
-use Electro\Core\Assembly\Services\Bootstrapper;
-use Electro\Core\ConsoleApplication\Config\ConsoleSettings;
+use Electro\ConsoleApplication\Config\ConsoleSettings;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interfaces\ModelControllerInterface;
 use Electro\Interfaces\ModuleInterface;
+use Electro\Kernel\Lib\ModuleInfo;
+use Electro\Kernel\Services\Bootstrapper;
 use Electro\Plugins\IlluminateDatabase\Commands\MigrationCommands;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 use Illuminate\Events\Dispatcher;
-use const Electro\Core\Assembly\Services\CONFIGURE;
-use const Electro\Core\Assembly\Services\REGISTER_SERVICES;
+use const Electro\Kernel\Services\CONFIGURE;
+use const Electro\Kernel\Services\REGISTER_SERVICES;
 
 class IlluminateDatabaseModule implements ModuleInterface
 {
