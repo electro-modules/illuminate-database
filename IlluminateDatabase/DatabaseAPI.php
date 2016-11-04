@@ -2,10 +2,13 @@
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
-use PhpKit\ConnectionInterface;
+use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
 
 /**
- * An interface to the Illuminate Database API.
+ * A mediator for the Illuminate Database API.
+ *
+ * <p>It integrates with PhpKit\ExtPDO and the framework's Database subsystem, so that connections defined on the
+ * framework's {@see Connections} service are automatically available as Illuminate Database connections.
  *
  * ### Facades
  *
@@ -53,23 +56,35 @@ class DatabaseAPI
    * @var Manager
    */
   public $manager;
+  /**
+   * @var ConnectionsInterface
+   */
+  private $connections;
 
-  public function __construct (ConnectionInterface $connection)
+  public function __construct (ConnectionsInterface $connections)
   {
-    $this->manager = new Manager;
-    $this->manager->addConnection ($connection->getProperties ());
+    $this->manager     = new Manager;
+    $this->connections = $connections;
   }
 
   /**
-   * Returns an instance of the Illuminate Database connection having the speified name, or the default connection if no
-   * name is given.
+   * Returns an instance of the Illuminate Database connection having the specified name, or the default connection if
+   * no name is given.
    *
-   * @param string $connectionName [optional] A connection name, if you want to use a connection other than the default.
+   * @param string $connectionName [optional] A connection name, if you want to use a connection other than the
+   *                               default.
    * @return \Illuminate\Database\Connection
    */
-  public function connection ($connectionName = null)
+  public function connection ($connectionName = '')
   {
-    return $this->manager->getConnection ($connectionName);
+    try {
+      return $this->manager->getConnection ($connectionName);
+    }
+    catch (\InvalidArgumentException $e) {
+      $con = $this->connections->get ($connectionName);
+      $this->manager->addConnection ($con->getProperties (), $connectionName);
+      return $this->manager->getConnection ($connectionName);
+    }
   }
 
   /**
@@ -109,7 +124,7 @@ class DatabaseAPI
    */
   public function query ($connectionName = null)
   {
-    return $this->manager->getConnection ($connectionName)->query ();
+    return $this->connection ($connectionName)->query ();
   }
 
   /**
@@ -120,7 +135,7 @@ class DatabaseAPI
    */
   public function schema ($connectionName = null)
   {
-    return $this->manager->getConnection ($connectionName)->getSchemaBuilder ();
+    return $this->connection ($connectionName)->getSchemaBuilder ();
   }
 
   /**

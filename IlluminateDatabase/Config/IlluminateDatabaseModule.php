@@ -12,6 +12,7 @@ use Electro\Plugins\IlluminateDatabase\Commands\MigrationCommands;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
+use Electro\Profiles\ConsoleProfile;
 use Illuminate\Events\Dispatcher;
 
 class IlluminateDatabaseModule implements ModuleInterface
@@ -32,12 +33,14 @@ class IlluminateDatabaseModule implements ModuleInterface
             ->share (ModelController::class)
             ->share (MigrationsSettings::class)
             ->alias (MigrationsInterface::class, Migrations::class);
-        })
-      //
-      ->onConfigure (
-        function (ConsoleSettings $consoleSettings) {
-          $consoleSettings->registerTasksFromClass (MigrationCommands::class);
         });
+
+    if ($kernel->getProfile () instanceof ConsoleProfile)
+      $kernel
+        ->onConfigure (
+          function (ConsoleSettings $consoleSettings) {
+            $consoleSettings->registerTasksFromClass (MigrationCommands::class);
+          });
   }
 
 }
