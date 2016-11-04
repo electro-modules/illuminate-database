@@ -2,6 +2,7 @@
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\ConnectionResolverInterface;
 use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
 
 /**
@@ -48,7 +49,7 @@ use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
  * }
  * ```
  */
-class DatabaseAPI
+class DatabaseAPI implements ConnectionResolverInterface
 {
   /**
    * The database manager instance.
@@ -60,6 +61,10 @@ class DatabaseAPI
    * @var ConnectionsInterface
    */
   private $connections;
+  /**
+   * @var string The default connection's name.
+   */
+  private $defaultConnection = '';
 
   public function __construct (ConnectionsInterface $connections)
   {
@@ -71,20 +76,42 @@ class DatabaseAPI
    * Returns an instance of the Illuminate Database connection having the specified name, or the default connection if
    * no name is given.
    *
-   * @param string $connectionName [optional] A connection name, if you want to use a connection other than the
-   *                               default.
+   * @param string $connectionName [optional] A connection name, if you want to use a connection other than the default.
    * @return \Illuminate\Database\Connection
    */
-  public function connection ($connectionName = '')
+  public function connection ($connectionName = 'default')
   {
+    $connectionName = $connectionName ?: $this->defaultConnection;
     try {
       return $this->manager->getConnection ($connectionName);
     }
     catch (\InvalidArgumentException $e) {
-      $con = $this->connections->get ($connectionName);
+      $connectionName = $connectionName ?: 'default';
+      $con            = $this->connections->get ($connectionName);
       $this->manager->addConnection ($con->getProperties (), $connectionName);
       return $this->manager->getConnection ($connectionName);
     }
+  }
+
+  /**
+   * Get the default connection name.
+   *
+   * @return string
+   */
+  public function getDefaultConnection ()
+  {
+    return $this->defaultConnection;
+  }
+
+  /**
+   * Set the default connection name.
+   *
+   * @param  string $name
+   * @return void
+   */
+  public function setDefaultConnection ($name)
+  {
+    $this->defaultConnection = $name;
   }
 
   /**

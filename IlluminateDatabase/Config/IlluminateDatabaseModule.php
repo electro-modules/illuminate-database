@@ -13,6 +13,7 @@ use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 use Electro\Profiles\ConsoleProfile;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 
 class IlluminateDatabaseModule implements ModuleInterface
@@ -28,6 +29,7 @@ class IlluminateDatabaseModule implements ModuleInterface
               $db->manager->setAsGlobal ();
               $db->manager->setEventDispatcher (new Dispatcher($db->manager->getContainer ()));
               $db->manager->bootEloquent ();
+              Model::setConnectionResolver($db);
             })
             ->alias (ModelControllerInterface::class, ModelController::class)
             ->share (ModelController::class)
