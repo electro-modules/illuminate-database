@@ -48,6 +48,7 @@ class BaseModel extends Model
     if (!$this->save ()) return false;
 
     // Now the other relationships
+    /** @var Model $models */
     foreach ($this->relations as $name => $models) {
 
       if (!method_exists ($this, $name)) {
@@ -56,11 +57,19 @@ class BaseModel extends Model
       }
 
       // Get relationship
+      /** @var Relation $relation */
       $relation = $this->$name();
 
       if ($models instanceof Model)
         $models = [$models];
+      /** @var Model $model */
       foreach (Collection::make ($models) as $model) {
+        // $model may be a foreign key value submitted by a form
+        if (is_scalar($model)) {
+          $value = $model;
+          $class = get_class($relation->getRelated());
+          $model = $class::findOrFail ($value);
+        }
         if ($relation instanceof HasManyThrough) {
           if (!$model->push ()) return false;
         }
@@ -91,10 +100,11 @@ class BaseModel extends Model
   {
     // Check if key is actually a relationship
     /** @var Relation $relation */
-    if (method_exists ($this, $key) && ($relation = $this->$key())) {
+    if (method_exists ($this, $key)) {
       // Convert arrays to instances of the correct model
       if (is_array ($value)) {
         if (isset($value[0]) && is_scalar($value[0])) {
+
         }
         else $value = $relation->getRelated ()->newInstance ($value);
       }
