@@ -65,20 +65,21 @@ class BaseModel extends Model
       /** @var Model $model */
       foreach (Collection::make ($models) as $model) {
         // $model may be a foreign key value submitted by a form
-        if (is_scalar($model)) {
+        if (is_scalar ($model)) {
           $value = $model;
-          $class = get_class($relation->getRelated());
-          $model = $class::findOrFail ($value);
+          $class = get_class ($relation->getRelated ());
+          $model = $class::find ($value)
+            ?: $relation->getRelated ()->newInstance ([$relation->getRelated ()->primaryKey => $value]);
         }
         if ($relation instanceof HasManyThrough) {
           if (!$model->push ()) return false;
         }
         elseif ($relation instanceof HasOneOrMany) {
           $fkey = $relation->getPlainForeignKey ();
-          $model->setAttribute ($fkey, $relation->getParentKey());
-          if ($relation instanceof  MorphOneOrMany) {
-            $mt = $relation->getPlainMorphType();
-            $m = $relation->getMorphClass();
+          $model->setAttribute ($fkey, $relation->getParentKey ());
+          if ($relation instanceof MorphOneOrMany) {
+            $mt = $relation->getPlainMorphType ();
+            $m  = $relation->getMorphClass ();
             $model->setAttribute ($mt, $m);
           }
           $model->push ();
@@ -101,21 +102,27 @@ class BaseModel extends Model
     // Check if key is actually a relationship
     /** @var Relation $relation */
     if (method_exists ($this, $key)) {
-      // Convert arrays to instances of the correct model
-      if (is_array ($value)) {
-        if (isset($value[0]) && is_scalar($value[0])) {
+      // If so, convert scalars and arrays to instances of the correct model
+      if (isset($value) && !$value instanceof Model) {
 
+        /** @var Relation $relation */
+        $relation = $this->$key();
+        // Convert arrays to instances of the correct model
+        if (is_array ($value)) {
+          if (isset($value[0]) && is_scalar ($value[0])) {
+
+          }
+          else $value = $relation->getRelated ()->newInstance ($value);
         }
-        else $value = $relation->getRelated ()->newInstance ($value);
-      }
 
-      if ($relation instanceof BelongsTo) {
-        $relation->associate ($value);
+        if ($relation instanceof BelongsTo) {
+          $relation->associate ($value);
+        }
+        else {
+          $this->setRelation ($key, $value);
+        }
+        return;
       }
-      else {
-        $this->setRelation ($key, $value);
-      }
-      return;
     }
     parent::setAttribute ($key, $value);
   }
