@@ -13,11 +13,17 @@ use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 use Electro\Profiles\ConsoleProfile;
+use Electro\Profiles\WebProfile;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 
 class IlluminateDatabaseModule implements ModuleInterface
 {
+  static function getCompatibleProfiles ()
+  {
+    return [WebProfile::class, ConsoleProfile::class];
+  }
+
   static function startUp (KernelInterface $kernel, ModuleInfo $moduleInfo)
   {
     $kernel
