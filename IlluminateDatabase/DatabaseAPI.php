@@ -15,8 +15,8 @@ use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
  *
  * This plugin also emulates some common database-related Laravel facades:
  *
- * - `DB::method()`     - equivalent to `$this->query()->method()`
- * - `Schema::method()` - equivalent to `$this->schema()->method()`
+ * - `DB::method()`     - equivalent to `$this->manager->connection ()->method()`
+ * - `Schema::method()` - equivalent to `$this->manager->schema()->method()`
  *
  * > **Note:** being an anti-pattern, facades are not recommended for development with Electro.
  * <p><br>
