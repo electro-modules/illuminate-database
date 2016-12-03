@@ -12,7 +12,7 @@ Integrates the Laravel's Illuminate Database Component into the Electro framewor
 To install this plugin on your application, using the terminal, `cd` to your app's directory and type:
 
 ```bash
-workman module:install-plugin electro-modules/illuminate-database
+workman module:install plugin electro-modules/illuminate-database
 ```
 
 > For correct operation, do not install this package directly with Composer.
@@ -22,15 +22,19 @@ workman module:install-plugin electro-modules/illuminate-database
 ### Available commands
 
 Command              | Description
----------------------|--------------------------------------------------------------------------
-`make:migration`     | Create a new migration for the specified module.
-`migration:up`       | Migrate the database for the specified module,
-`migration:down`     | Rollback the last migration or a specific one, for the specified module.
-`migration:status`   | Show migration status for the specified module.
+---------------------|-----------------------------------------------------------------------------------------
+`make:migration`     | Create a new database migration.
+`make:seeder`        | Create a new database seeder.
+`migrate`            | Runs all pending migrations of a module, optionally up to a specific version.
+`migrate:refresh`    | Reset and re-run all migrations.
+`migrate:reset`      | Rollback all database migrations.
+`migration:rollback` | Reverts the last migration of a specific module, or optionally up to a specific version.
+`migration:seed`     | Run all available seeders of a specific module, or just a specific seeder.
+`migration:status`   | Print a list of all migrations of a specific module, along with their current status.
 
 You can also type `workman` on the terminal to get a list of available commands.
 
-Type `worman help migration:xxx` (where `xxx` is the command name) to know which arguments and options each command supports.
+Type `worman help xxx` (where `xxx` is the command name) to know which arguments and options each command supports.
 
 ## License
 
