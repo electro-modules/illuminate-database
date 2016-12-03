@@ -10,44 +10,6 @@ use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
  *
  * <p>It integrates with PhpKit\ExtPDO and the framework's Database subsystem, so that connections defined on the
  * framework's {@see Connections} service are automatically available as Illuminate Database connections.
- *
- * ### Facades
- *
- * This plugin also emulates some common database-related Laravel facades:
- *
- * - `DB::method()`     - equivalent to `$this->manager->connection ()->method()`
- * - `Schema::method()` - equivalent to `$this->manager->schema()->method()`
- *
- * > **Note:** being an anti-pattern, facades are not recommended for development with Electro.
- * <p><br>
- * > **Note:** be sure to import the related namespaces before using the facades:
- * > - `use Electro\Plugins\IlluminateDatabase\DB;`
- * > - `use Electro\Plugins\IlluminateDatabase\Schema;`
- *
- * > **Note:** facades require a global shared context, so remember to inject an instance of this class before using any
- * of them. You don't need to use the injected instance, but just by injecting it, you'll setup the required global
- * context.
- *
- * ### Eloquent
- *
- * To use Eloquent, access your models as usual, but remember to inject an instance of this class before using any
- * model.
- *
- * ###### Ex:
- *
- * ```
- * use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
- *
- * class MyClass {
- *    // you must inject an instance of DatabaseAPI before using Eloquent.
- *    function __construct (DatabaseAPI $db) {
- *      // You don't have to do anything with $db, though.
- *    }
- *    function getTheUser () {
- *      return User::find(1);
- *    }
- * }
- * ```
  */
 class DatabaseAPI implements ConnectionResolverInterface
 {
@@ -64,7 +26,7 @@ class DatabaseAPI implements ConnectionResolverInterface
   /**
    * @var string The default connection's name.
    */
-  private $defaultConnection = '';
+  private $defaultConnection = 'default';
 
   public function __construct (ConnectionsInterface $connections)
   {
@@ -79,7 +41,7 @@ class DatabaseAPI implements ConnectionResolverInterface
    * @param string $connectionName [optional] A connection name, if you want to use a connection other than the default.
    * @return \Illuminate\Database\Connection
    */
-  public function connection ($connectionName = 'default')
+  public function connection ($connectionName = null)
   {
     $connectionName = $connectionName ?: $this->defaultConnection;
     try {
