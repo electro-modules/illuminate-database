@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase\Services;
 
 use Electro\Interfaces\DI\InjectorInterface;
@@ -61,6 +62,11 @@ class Migrations implements MigrationsInterface
     $this->injector    = $injector;
   }
 
+  function databaseIsAvailable ()
+  {
+    $this->databaseAPI->getConnections ()->exists ();
+  }
+
   function migrate ($target = null, $pretend = false)
   {
     $this->assertModuleIsSet ();
@@ -75,7 +81,7 @@ class Migrations implements MigrationsInterface
 
       foreach ($pending as $migration) {
         $path = $migration[Migration::path];
-        $sql .= $this->formatQueryBlock ($migration[Migration::name], $this->extractMigrationSQL ($path));
+        $sql  .= $this->formatQueryBlock ($migration[Migration::name], $this->extractMigrationSQL ($path));
       }
       return $sql;
     }
@@ -277,7 +283,7 @@ class Migrations implements MigrationsInterface
     $sql = '';
     foreach ($migrations as $migration) {
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
-      $sql .= $this->formatQueryBlock ($migration[Migration::name], implode (self::QUERY_DELIMITER, $queries));
+      $sql     .= $this->formatQueryBlock ($migration[Migration::name], implode (self::QUERY_DELIMITER, $queries));
     }
     return $sql;
   }

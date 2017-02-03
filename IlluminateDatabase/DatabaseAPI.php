@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Illuminate\Database\Capsule\Manager;
@@ -53,6 +54,16 @@ class DatabaseAPI implements ConnectionResolverInterface
       $this->manager->addConnection ($con->getProperties (), $connectionName);
       return $this->manager->getConnection ($connectionName);
     }
+  }
+
+  /**
+   * Gets the database connection registry.
+   *
+   * @return ConnectionsInterface
+   */
+  public function getConnections ()
+  {
+    return $this->connections;
   }
 
   /**
@@ -139,29 +150,29 @@ class DatabaseAPI implements ConnectionResolverInterface
     return $this->query ($connectionName)->from ($table);
   }
 
-  public function updateMultipleSelection ($pivotTable, $ownerField, $ownerValue, $valueField, array $values,
-                                           $connectionName = null)
-  {
-    $this->connection ($connectionName)->transaction (function () use (
-      $pivotTable, $ownerField, $ownerValue, $values, $valueField
-    ) {
-      $pivotTable = $this->table ($pivotTable);
-      $pivotTable->where ($ownerField, $ownerValue)->delete ();
-      foreach ($values as $v)
-        $pivotTable->insert ([
-          $ownerField => $ownerValue,
-          $valueField => $v,
-        ]);
-    });
-  }
-
-  public function updateMultipleSelectionBool ($table, $field, array $selectedIDs, $pk = 'id', $connectionName = null)
-  {
-    $this->connection ($connectionName)->transaction (function () use ($table, $field, $selectedIDs, $pk) {
-      $table = $this->table ($table);
-      $table->update ([$field => 0]);
-      $table->whereIn ($pk, $selectedIDs)->update ([$field => 1]);
-    });
-  }
+//  public function updateMultipleSelection ($pivotTable, $ownerField, $ownerValue, $valueField, array $values,
+//                                           $connectionName = null)
+//  {
+//    $this->connection ($connectionName)->transaction (function () use (
+//      $pivotTable, $ownerField, $ownerValue, $values, $valueField
+//    ) {
+//      $pivotTable = $this->table ($pivotTable);
+//      $pivotTable->where ($ownerField, $ownerValue)->delete ();
+//      foreach ($values as $v)
+//        $pivotTable->insert ([
+//          $ownerField => $ownerValue,
+//          $valueField => $v,
+//        ]);
+//    });
+//  }
+//
+//  public function updateMultipleSelectionBool ($table, $field, array $selectedIDs, $pk = 'id', $connectionName = null)
+//  {
+//    $this->connection ($connectionName)->transaction (function () use ($table, $field, $selectedIDs, $pk) {
+//      $table = $this->table ($table);
+//      $table->update ([$field => 0]);
+//      $table->whereIn ($pk, $selectedIDs)->update ([$field => 1]);
+//    });
+//  }
 
 }
