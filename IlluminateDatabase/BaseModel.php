@@ -75,10 +75,10 @@ class BaseModel extends Model
           if (!$model->push ()) return false;
         }
         elseif ($relation instanceof HasOneOrMany) {
-          $fkey = $relation->getPlainForeignKey ();
+          $fkey = $relation->getForeignKeyName();
           $model->setAttribute ($fkey, $relation->getParentKey ());
           if ($relation instanceof MorphOneOrMany) {
-            $mt = $relation->getPlainMorphType ();
+            $mt = $relation->getMorphType ();
             $m  = $relation->getMorphClass ();
             $model->setAttribute ($mt, $m);
           }
