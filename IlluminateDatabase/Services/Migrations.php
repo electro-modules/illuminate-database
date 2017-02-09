@@ -214,7 +214,8 @@ class Migrations implements MigrationsInterface
   private function getLoggedMigrations ()
   {
     return map ($this->getTable ()->orderBy (Migration::date)->get (), function ($rec, &$i) {
-      $i = $rec[Migration::date];
+      $rec = (array)$rec;
+      $i = get ($rec, Migration::date);
       return $rec;
     });
   }
@@ -240,7 +241,7 @@ class Migrations implements MigrationsInterface
    */
   private function getTable ()
   {
-    $this->databaseAPI->connection ()->setFetchMode (\PDO::FETCH_ASSOC);
+//    $this->databaseAPI->connection ()->setFetchMode (\PDO::FETCH_ASSOC);
     return $this->databaseAPI->table (self::MIGRATIONS_TABLE)->where (Migration::module, $this->module->name);
   }
 
