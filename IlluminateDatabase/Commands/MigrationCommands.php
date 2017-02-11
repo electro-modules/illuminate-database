@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase\Commands;
 
 use Electro\ConsoleApplication\Lib\ModulesUtil;
@@ -6,13 +7,20 @@ use Electro\ConsoleApplication\Services\ConsoleIO;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interop\MigrationStruct as Migration;
 use Electro\Kernel\Lib\ModuleInfo;
+use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
+use Robo\Task\File\Replace;
+use Robo\Task\FileSystem\FilesystemStack;
 
 /**
  * Database migration commands.
  */
 class MigrationCommands
 {
+  /**
+   * @var FilesystemStack
+   */
+  private $fs;
   /**
    * @var ConsoleIO
    */
@@ -26,17 +34,24 @@ class MigrationCommands
    */
   private $modulesUtil;
   /**
+   * @var ModulesRegistry
+   */
+  private $registry;
+  /**
    * @var MigrationsSettings
    */
   private $settings;
 
   function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil,
-                        MigrationsInterface $migrationsAPI)
+                        MigrationsInterface $migrationsAPI, FilesystemStack $fs,
+                        ModulesRegistry $registry)
   {
     $this->io            = $io;
     $this->modulesUtil   = $modulesUtil;
     $this->settings      = $settings;
     $this->migrationsAPI = $migrationsAPI;
+    $this->fs            = $fs;
+    $this->registry      = $registry;
   }
 
   /**
@@ -44,23 +59,50 @@ class MigrationCommands
    *
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
-   * @param string $name       [optional] The name of the migration (a human-friendly description, it may contain
+   * @param string $name       [optional] The name of the migration (a human-friendly description; it may contain
    *                           spaces, but not accented characters). If not specified, the user will be prompted for it
    * @param array  $options
-   * @option $class|l Use a class implementing "Phinx\Migration\CreationInterface" to generate the template
+   * @option $class|l Do not generate a class name; use the provided one
    * @option $template|t Use an alternative template
-   * @option $no-doc|d Do not generate a documentation block.
+   * @option $doc|d Generate embedded documentation.
    * @return int Status code
    */
   function makeMigration ($moduleName = null, $name = null, $options = [
     'class|l'    => null,
     'template|t' => null,
-    'no-doc|d'   => false,
+    'doc|d'      => false,
   ])
   {
+    $io = $this->io;
     $this->setupModule ($moduleName);
+    if (!$name) {
+      $name = $io->ask ('Migration description:');
+      if (!$name)
+        $io->cancel ();
+    }
+    $doc       = get ($options, 'doc');
+    $className = get ($options, 'class') ?: str_camelize ($name, true);
+    $template  = get ($options, 'template') ?: $doc ? 'IlluminateMigration-doc.php' : 'IlluminateMigration.php';
 
-    return 0;
+    $module     = $this->registry->getModule ($moduleName);
+    $srcPath    = sprintf ('%s/scaffolds/%s', dirname (__DIR__), $template);
+    $filename   = sprintf ('%s_%s.php', strftime ('%Y%m%d%H%M%S'), str_decamelize ($className, false, '_'));
+    $targetPath = "$module->path/{$this->settings->migrationsPath()}/$filename";
+
+    $io->mute ();
+    $this->fs->copy ($srcPath, $targetPath)->run ();
+
+    (new Replace ($targetPath))
+      ->from ([
+        '__CLASS__',
+      ])
+      ->to ([
+        $className,
+      ])
+      ->run ();
+
+    $io->unmute ();
+    $io->done ("Migration <info>$filename</info> was created");
   }
 
   /**
@@ -160,9 +202,16 @@ class MigrationCommands
     'pretend|p' => false,
   ])
   {
+    $target = get ($options, 'target');
+    if ((string)$target != '0')
+      if (!$this->io->confirm ("
+Currently this command always <error>rolls back ALL migrations!</error>
+Are  you sure you want to proceed?")
+      )
+        $this->io->cancel ();
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->rollBack (get ($options, 'target'), get ($options, 'date'), $pretend);
+    $out     = $this->migrationsAPI->rollBack ($target, get ($options, 'date'), $pretend);
     if ($pretend)
       $this->io->writeln ($out);
     else $out

@@ -191,7 +191,7 @@ class Migrations implements MigrationsInterface
   private function formatQueryBlock ($name, $sql)
   {
     $sql = str_replace (self::QUERY_DELIMITER, ";\n", $sql);
-    return sprintf ("-- %s\n\n%s", $name, $sql);
+    return sprintf ("-- %s\n\n%s\n", $name, $sql);
   }
 
   private function getAllMigrations ()
@@ -215,7 +215,7 @@ class Migrations implements MigrationsInterface
   {
     return map ($this->getTable ()->orderBy (Migration::date)->get (), function ($rec, &$i) {
       $rec = (array)$rec;
-      $i = get ($rec, Migration::date);
+      $i   = get ($rec, Migration::date);
       return $rec;
     });
   }
@@ -284,7 +284,9 @@ class Migrations implements MigrationsInterface
     $sql = '';
     foreach ($migrations as $migration) {
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
-      $sql     .= $this->formatQueryBlock ($migration[Migration::name], implode (self::QUERY_DELIMITER, $queries));
+      $sql     .= $this->formatQueryBlock ('Undo ' . lcfirst ($migration[Migration::name]), implode
+      (self::QUERY_DELIMITER,
+        $queries));
     }
     return $sql;
   }

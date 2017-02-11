@@ -1,8 +1,8 @@
 <?php
-use Electro\Plugins\IlluminateDatabase\Migration;
+use Electro\Plugins\IlluminateDatabase\AbstractMigration;
 use Illuminate\Database\Schema\Blueprint;
 
-class $className extends Migration
+class __CLASS__ extends AbstractMigration
 {
   /**
    * Run the migration.

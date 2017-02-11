@@ -1,5 +1,5 @@
 <?php
-use Electro\Plugins\IlluminateDatabase\Migration;
+use Electro\Plugins\IlluminateDatabase\AbstractMigration;
 use Illuminate\Database\Schema\Blueprint;
 
 /**
@@ -39,11 +39,6 @@ use Illuminate\Database\Schema\Blueprint;
  * few cases where they are ok to use, if you wish to. Beware that you will NOT get IDE autocompletion and code analysis
  * though.
  *
- * ### The Phinx API
- *
- * All methods from the Phinx migrations API are also available.
- * <p>The only exception is the `change()` method, which Illuminate migrations do not support.
- * <p>
  * ---------------------------------------------------------------------------------------------------------------------
  * <p>
  * To suppress the inclusion of this documentation block on future migrations, add the `--no-doc` or `-d` option to the
@@ -51,7 +46,7 @@ use Illuminate\Database\Schema\Blueprint;
  *
  * > Ex: `workman make:migration -d`
  */
-class $className extends Migration
+class __CLASS__ extends AbstractMigration
 {
   /**
    * Run the migration.
