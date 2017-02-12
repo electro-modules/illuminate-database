@@ -296,7 +296,7 @@ Are  you sure you want to proceed?")
    */
   private function setupModule (&$moduleName)
   {
-    $this->modulesUtil->selectModule ($moduleName, function (ModuleInfo $module) { return $module->enabled; });
+    $this->modulesUtil->selectInstalledModule ($moduleName, function (ModuleInfo $module) { return $module->enabled; });
     $this->migrationsAPI->module ($moduleName);
   }
 
