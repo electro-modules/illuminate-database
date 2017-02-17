@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Electro\Database\Lib\CsvUtil;
@@ -81,28 +82,38 @@ abstract class AbstractSeeder implements SeederInterface
   }
 
   /**
-   * Loads and parses CSV-formatted data from a file and inserts it into a database table.
+   * Loads and parses CSV-formatted data from a file and inserts or updates it on a database table.
    *
    * Data should be comma-delimited and string may be enclosed on double quotes.
    *
-   * @param string            $file    The file path.
-   * @param string|null       $table   Table name. If not specified, the name is derived from the filename, without the
-   *                                   .csv extension.
-   * @param array|string|null $columns Either:<ul>
-   *                                   <li> an array of column names,
-   *                                   <li> a string of comma-delimited column names,
-   *                                   <li> null (or ommited) to read column names from the first row of data.
-   *                                   </ul>
+   * @param string            $file      The file path.
+   * @param string|null       $tableName Table name. If not specified, the name is derived from the filename, without
+   *                                     the .csv extension.
+   * @param array|string|null $columns   Either:<ul>
+   *                                     <li> an array of column names,
+   *                                     <li> a string of comma-delimited column names,
+   *                                     <li> null (or ommited) to read column names from the first row of data.
+   *                                     </ul>
    * @return $this For chaining.
+   * @throws \Electro\Exceptions\Fatal\FileNotFoundException
    */
-  protected function importCsvFrom ($file, $table = null, $columns = null)
+  protected function importCsvFrom ($file, $tableName = null, $columns = null)
   {
-    if (!$table)
-      $table = basename ($file, '.csv');
-    $data  = CsvUtil::loadCSV ($file, $columns);
-    $table = $this->db->table ($table);
-    foreach ($data as $row)
-      $table->insert ($row);
+    if (!$tableName)
+      $tableName = basename ($file, '.csv');
+    $schema = $this->db->schema ();
+    if (!$schema->hasTable ($tableName))
+      $this->output->warn ("Table $tableName does not exist. Skipped.");
+    else {
+      $data = CsvUtil::loadCSV ($file, $columns);
+      foreach ($data as $row) {
+        $table = $this->db->table ($tableName);
+        if (isset ($row['id']) && $table->find ($row['id']))
+          $table->update ($row);
+        else
+          $table->insert ($row);
+      }
+    }
     return $this;
   }
 

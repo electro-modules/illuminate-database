@@ -147,9 +147,16 @@ class Migrations implements MigrationsInterface
 
     // SEED
 
-    $this->databaseAPI->connection ()->transaction (function () use ($seederInstance) {
-      $seederInstance->run ();
-    });
+    $schema = $this->databaseAPI->schema ();
+    try {
+      $schema->disableForeignKeyConstraints ();
+      $this->databaseAPI->connection ()->transaction (function () use ($seederInstance) {
+        $seederInstance->run ();
+      });
+    }
+    finally {
+      $schema->enableForeignKeyConstraints ();
+    }
 
     return 1;
   }
