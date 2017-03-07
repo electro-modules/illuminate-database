@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Electro\Traits\InspectionTrait;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  * @method static Model|Collection findOrFail($id, array $columns = ['*']) Find a model by its primary key or throw an
  *         exception.
  */
-class BaseModel extends Model
+class BaseModel extends Model implements \Serializable
 {
   use InspectionTrait;
   static $INSPECTABLE = ['attributes'];
@@ -75,7 +76,7 @@ class BaseModel extends Model
           if (!$model->push ()) return false;
         }
         elseif ($relation instanceof HasOneOrMany) {
-          $fkey = $relation->getForeignKeyName();
+          $fkey = $relation->getForeignKeyName ();
           $model->setAttribute ($fkey, $relation->getParentKey ());
           if ($relation instanceof MorphOneOrMany) {
             $mt = $relation->getMorphType ();
@@ -95,6 +96,11 @@ class BaseModel extends Model
     }
 
     return true;
+  }
+
+  public function serialize ()
+  {
+    return serialize ($this->attributes);
   }
 
   public function setAttribute ($key, $value)
@@ -125,6 +131,11 @@ class BaseModel extends Model
       }
     }
     parent::setAttribute ($key, $value);
+  }
+
+  public function unserialize ($serialized)
+  {
+    $this->attributes = unserialize ($serialized);
   }
 
 }
