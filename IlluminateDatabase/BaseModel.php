@@ -100,7 +100,10 @@ class BaseModel extends Model implements \Serializable
 
   public function serialize ()
   {
-    return serialize ($this->attributes);
+    return serialize ([
+      'attributes' => $this->attributes,
+      'original'   => $this->original,
+    ]);
   }
 
   public function setAttribute ($key, $value)
@@ -135,7 +138,9 @@ class BaseModel extends Model implements \Serializable
 
   public function unserialize ($serialized)
   {
-    $this->attributes = unserialize ($serialized);
+    $data             = unserialize ($serialized);
+    $this->attributes = $data['attributes'];
+    $this->original   = $data['original'];
   }
 
 }
