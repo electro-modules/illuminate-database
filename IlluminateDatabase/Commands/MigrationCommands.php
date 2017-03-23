@@ -4,9 +4,12 @@ namespace Electro\Plugins\IlluminateDatabase\Commands;
 
 use Electro\ConsoleApplication\Lib\ModulesUtil;
 use Electro\ConsoleApplication\Services\ConsoleIO;
+use Electro\Exceptions\Fatal\FileNotFoundException;
 use Electro\Interfaces\Migrations\MigrationsInterface;
+use Electro\Interop\MigrationStruct;
 use Electro\Interop\MigrationStruct as Migration;
 use Electro\Kernel\Lib\ModuleInfo;
+use Electro\Kernel\Services\ModulesInstaller;
 use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Robo\Task\File\Replace;
@@ -30,6 +33,10 @@ class MigrationCommands
    */
   private $migrationsAPI;
   /**
+   * @var ModulesInstaller
+   */
+  private $modulesInstaller;
+  /**
    * @var ModulesUtil
    */
   private $modulesUtil;
@@ -44,14 +51,15 @@ class MigrationCommands
 
   function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil,
                         MigrationsInterface $migrationsAPI, FilesystemStack $fs,
-                        ModulesRegistry $registry)
+                        ModulesRegistry $registry, ModulesInstaller $modulesInstaller)
   {
-    $this->io            = $io;
-    $this->modulesUtil   = $modulesUtil;
-    $this->settings      = $settings;
-    $this->migrationsAPI = $migrationsAPI;
-    $this->fs            = $fs;
-    $this->registry      = $registry;
+    $this->io               = $io;
+    $this->modulesUtil      = $modulesUtil;
+    $this->settings         = $settings;
+    $this->migrationsAPI    = $migrationsAPI;
+    $this->fs               = $fs;
+    $this->registry         = $registry;
+    $this->modulesInstaller = $modulesInstaller;
   }
 
   /**
@@ -142,8 +150,8 @@ class MigrationCommands
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'migration')), true)
-      : $this->io->warn ("Nothing to migrate")->done (true);
+      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'migration')))
+      : $this->io->warn ("Nothing to migrate")->done ();
     return 0;
   }
 
@@ -215,9 +223,8 @@ Are  you sure you want to proceed?")
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>', simplePluralize ($out, 'migration')),
-        true)
-      : $this->io->warn ("Nothing to roll back")->done ('', true);
+      ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>', simplePluralize ($out, 'migration')))
+      : $this->io->warn ("Nothing to roll back")->done ();
     return 0;
   }
 
@@ -229,22 +236,28 @@ Are  you sure you want to proceed?")
    * @param array  $options
    * @option $seeder|s The name of the seeder (in camel case)
    * @option $pretend|p Do not actually run the seeder, just output the SQL code that would be executed
+   * @option $clear|c Truncate tables before importing data into them
    * @return int Status code
    */
   function migrateSeed ($moduleName = null, $options = [
     'seeder|s'  => 'Seeder',
     'pretend|p' => false,
+    'clear|c'   => false,
   ])
   {
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->seed (get ($options, 'seeder'), $pretend);
+    try {
+      $out = $this->migrationsAPI->seed (get ($options, 'seeder'), $options);
+    }
+    catch (FileNotFoundException $e) {
+      $this->io->error ($e->getMessage ());
+    }
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'seeder')),
-        true)
-      : $this->io->warn ("Nothing to seed")->done (true);
+      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'seeder')))
+      : $this->io->warn ("Nothing to seed")->done ();
     return 0;
   }
 
@@ -286,6 +299,11 @@ Are  you sure you want to proceed?")
     return 0;
   }
 
+  private function formatCount ($v, $tag = 'info')
+  {
+    return !$v ? '  -' : sprintf ("<$tag>%s</$tag>", str_pad ($v, 3, ' ', STR_PAD_LEFT));
+  }
+
   /**
    * Prepares the migrations context for running on the specified module.
    *
@@ -296,8 +314,17 @@ Are  you sure you want to proceed?")
    */
   private function setupModule (&$moduleName)
   {
-    $this->modulesUtil->selectInstalledModule ($moduleName, function (ModuleInfo $module) { return $module->enabled; });
+    $this->modulesUtil->selectInstalledModule ($moduleName,
+      function (ModuleInfo $module) { return $module->enabled; },
+      false,
+      function ($moduleName) {
+        $migrations = $this->modulesInstaller->getMigrationsOf ($moduleName);
+        $pending    = array_findAll ($migrations, MigrationStruct::status, MigrationStruct::PENDING);
+        return sprintf (' <comment>migrations:</comment> %s  <comment>pending:</comment> %s',
+          $this->formatCount (count ($migrations)),
+          $this->formatCount (count ($pending))
+        );
+      });
     $this->migrationsAPI->module ($moduleName);
   }
-
 }

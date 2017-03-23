@@ -13,14 +13,16 @@ abstract class AbstractSeeder implements SeederInterface
   /** @var DatabaseAPI */
   protected $db;
   /** @var ConsoleIOInterface */
-  protected $output;
+  protected $io;
+  /** @var array */
+  protected $options = [];
   /** @var OutputInterface */
   private $savedOutput;
 
   public function __construct (DatabaseAPI $db, ConsoleIOInterface $consoleIO)
   {
-    $this->db     = $db;
-    $this->output = $consoleIO;
+    $this->db = $db;
+    $this->io = $consoleIO;
   }
 
   function getQueries ()
@@ -48,13 +50,18 @@ abstract class AbstractSeeder implements SeederInterface
   public function mute ($muted = true)
   {
     if ($muted && !$this->savedOutput) {
-      $this->savedOutput = $this->output->getOutput ();
-      $this->output->setOutput (new NullOutput);
+      $this->savedOutput = $this->io->getOutput ();
+      $this->io->setOutput (new NullOutput);
     }
     elseif (!$muted && $this->savedOutput) {
-      $this->output->setOutput ($this->savedOutput);
+      $this->io->setOutput ($this->savedOutput);
       $this->savedOutput = null;
     }
+  }
+
+  function setOptions (array $options)
+  {
+    $this->options = $options;
   }
 
   /**
@@ -86,6 +93,8 @@ abstract class AbstractSeeder implements SeederInterface
    *
    * Data should be comma-delimited and string may be enclosed on double quotes.
    *
+   * <p>**Note:** if `$this->options['clear']` is `true`, the table is truncated before data is imported.
+   *
    * @param string            $file      The file path.
    * @param string|null       $tableName Table name. If not specified, the name is derived from the filename, without
    *                                     the .csv extension.
@@ -99,12 +108,24 @@ abstract class AbstractSeeder implements SeederInterface
    */
   protected function importCsvFrom ($file, $tableName = null, $columns = null)
   {
+    $io = $this->io;
+    $io->begin ();
+
     if (!$tableName)
       $tableName = basename ($file, '.csv');
     $schema = $this->db->schema ();
+    $io->writeln ("Table <comment>$tableName</comment>")->indent (2);
+
     if (!$schema->hasTable ($tableName))
-      $this->output->warn ("Table $tableName does not exist. Skipped.");
+      $io->warn ("Does not exist. Skipped.");
     else {
+      if (get ($this->options, 'clear')) {
+        $io->write ("Clearing data\t");
+        $this->db->table ($tableName)->truncate ();
+        $io->writeln ('<info>done</info>');
+      }
+      $io->write ("Seeding\t");
+
       $data = CsvUtil::loadCSV ($file, $columns);
       foreach ($data as $row) {
         $table = $this->db->table ($tableName);
@@ -113,7 +134,9 @@ abstract class AbstractSeeder implements SeederInterface
         else
           $table->insert ($row);
       }
+      $io->writeln ('<info>done</info>');
     }
+    $io->indent (0)->nl ()->done ();
     return $this;
   }
 

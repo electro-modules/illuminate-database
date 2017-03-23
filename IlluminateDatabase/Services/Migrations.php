@@ -2,6 +2,7 @@
 
 namespace Electro\Plugins\IlluminateDatabase\Services;
 
+use Electro\Exceptions\Fatal\FileNotFoundException;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\Migrations\MigrationInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
@@ -64,7 +65,7 @@ class Migrations implements MigrationsInterface
 
   function databaseIsAvailable ()
   {
-    $this->databaseAPI->getConnections ()->exists ();
+    return $this->databaseAPI->getConnections ()->exists ();
   }
 
   function migrate ($target = null, $pretend = false)
@@ -131,14 +132,15 @@ class Migrations implements MigrationsInterface
     return $this->rollBackMigrations ($obsolete) + $this->rollBackMigrations ($done);
   }
 
-  function seed ($seeder = 'Seeder', $pretend = false)
+  function seed ($seeder = 'Seeder', array $options = [])
   {
     $this->assertModuleIsSet ();
     $seederInstance = $this->loadSeederClass ($seeder);
+    $seederInstance->setOptions ($options);
 
     // SIMULATE
 
-    if ($pretend) {
+    if (get ($options, 'pretend')) {
       $queries   = $seederInstance->getQueries ();
       $queries[] = ''; // Appends a ; to the last query.
       $sql       = implode (self::QUERY_DELIMITER, $queries);
@@ -255,13 +257,15 @@ class Migrations implements MigrationsInterface
   /**
    * @param string $path
    * @return MigrationInterface
+   * @throws FileNotFoundException If no migration file was found.
+   * @throws \Auryn\InjectionException
    */
   private function loadMigrationClass ($path)
   {
     $class = Migration::classFromFilename ($path);
     if (!class_exists ($class, false)) {
       if (!file_exists ($path))
-        throw new \RuntimeException("Migration file $path was not found");
+        throw new FileNotFoundException ($path);
       require $path;
       if (!class_exists ($class, false))
         throw new \RuntimeException("Migration file $path doesn't define a class named $class");
@@ -271,14 +275,16 @@ class Migrations implements MigrationsInterface
 
   /**
    * @param string $seeder The class name, which should equals the file name.
-   * @return SeederInterface
+   * @return SeederInterface|null NULL if the seeder was not found.
+   * @throws FileNotFoundException If no seeder file was found.
+   * @throws \Auryn\InjectionException
    */
   private function loadSeederClass ($seeder)
   {
     if (!class_exists ($seeder, false)) {
       $path = "$this->seedsPath/$seeder.php";
       if (!file_exists ($path))
-        throw new \RuntimeException("Migration file $path was not found");
+        throw new FileNotFoundException ($path);
       require $path;
       if (!class_exists ($seeder, false))
         throw new \RuntimeException("Migration file $path doesn't define a class named $seeder");
