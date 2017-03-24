@@ -135,8 +135,10 @@ class MigrationCommands
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
    * @param array  $options
-   * @option $target|t The version number to migrate to
-   * @option $pretend|p Do not actually run the migration, just output the SQL code that would be executed
+   * @option $target|t         The upper limit timestamp to migrate up to (ex: 20170314150049), inclusive; migrations
+   *                           with timestamps greater than it will be excluded; if not specified, it runs up to the
+   *                           most recent pending migration
+   * @option $pretend|p        Do not actually run the migration, just output the SQL code that would be executed
    * @return int Status code
    */
   function migrate ($moduleName = null, $options = [
@@ -146,7 +148,7 @@ class MigrationCommands
   {
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->migrate (get ($options, 'target'), $pretend);
+    $out     = $this->migrationsAPI->migrate (get ($options, 'target', '99999999999999'), $pretend);
     if ($pretend)
       $this->io->writeln ($out);
     else $out
@@ -199,27 +201,21 @@ class MigrationCommands
    * @param string $moduleName [optional] The target module (vendor-name/package-name syntax).
    *                           If not specified, the user will be prompted for it
    * @param array  $options
-   * @option $target|t The version number to rollback to
-   * @option $date|d   The date to rollback to
-   * @option $pretend|p Do not actually run the migration, just output the SQL code that would be executed
+   * @option $target|t         The lower limit timestamp to rollback to (ex: 20170314150049), inclusive; migrations
+   *                           with timestamps lower than it will be excluded; 0 = roll back all migrations.
+   *                           If not given, the last migration will be rolled back.
+   * @option $pretend|p        Do not actually run the migration, just output the SQL code that would be executed
    * @return int Status code
    */
   function migrateRollback ($moduleName = null, $options = [
     'target|t'  => null,
-    'date|d'    => null,
     'pretend|p' => false,
   ])
   {
     $target = get ($options, 'target');
-    if ((string)$target != '0')
-      if (!$this->io->confirm ("
-Currently this command always <error>rolls back ALL migrations!</error>
-Are  you sure you want to proceed?")
-      )
-        $this->io->cancel ();
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->rollBack ($target, get ($options, 'date'), $pretend);
+    $out     = $this->migrationsAPI->rollBack ($target, $pretend);
     if ($pretend)
       $this->io->writeln ($out);
     else $out

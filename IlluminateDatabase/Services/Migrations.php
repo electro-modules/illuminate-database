@@ -8,6 +8,7 @@ use Electro\Interfaces\Migrations\MigrationInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interfaces\Migrations\SeederInterface;
 use Electro\Interop\MigrationStruct as Migration;
+use Electro\Interop\MigrationStruct;
 use Electro\Kernel\Lib\ModuleInfo;
 use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
@@ -92,6 +93,8 @@ class Migrations implements MigrationsInterface
     $count = $this->rollBackMigrations ($obsolete);
 
     foreach ($pending as $migration) {
+      if ($migration[Migration::date] > $target)
+        break;
       $path = $migration[Migration::path];
       $this->runMigrationSQL ($path);
       $migration[Migration::reverse] = $this->extractMigrationSQL ($path, 'down');
@@ -115,21 +118,29 @@ class Migrations implements MigrationsInterface
     return $this;
   }
 
-  function rollBack ($target = null, $date = null, $pretend = false)
+  function rollBack ($target = null, $pretend = false)
   {
     $this->assertModuleIsSet ();
     $all      = $this->getAllMigrations ();
+
+    if (is_null($target)) {
+      $migration = PA ($all)->findAll (Migration::status, Migration::DONE)->orderBy (Migration::date, SORT_DESC)->first();
+      if ($migration)
+        $target = $migration[Migration::date];
+      else return 0;
+    }
+
     $done     = PA ($all)->findAll (Migration::status, Migration::DONE)->orderBy (Migration::date, SORT_DESC)->A;
     $obsolete = PA ($all)->findAll (Migration::status, Migration::OBSOLETE)->orderBy (Migration::date, SORT_DESC)->A;
 
     // SIMULATE
 
     if ($pretend)
-      return $this->pretendRollBackMigrations ($obsolete) . $this->pretendRollBackMigrations ($done);
+      return $this->pretendRollBackMigrations ($obsolete, $target) . $this->pretendRollBackMigrations ($done, $target);
 
     // ROLL BACK
 
-    return $this->rollBackMigrations ($obsolete) + $this->rollBackMigrations ($done);
+    return $this->rollBackMigrations ($obsolete, $target) + $this->rollBackMigrations ($done, $target);
   }
 
   function seed ($seeder = 'Seeder', array $options = [])
@@ -292,10 +303,12 @@ class Migrations implements MigrationsInterface
     return $this->injector->make ($seeder);
   }
 
-  private function pretendRollBackMigrations (array $migrations)
+  private function pretendRollBackMigrations (array $migrations, $target = null)
   {
     $sql = '';
     foreach ($migrations as $migration) {
+      if ($migration[Migration::date] < $target)
+        break;
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
       $sql     .= $this->formatQueryBlock ('Undo ' . lcfirst ($migration[Migration::name]), implode
       (self::QUERY_DELIMITER,
@@ -304,10 +317,12 @@ class Migrations implements MigrationsInterface
     return $sql;
   }
 
-  private function rollBackMigrations (array $migrations)
+  private function rollBackMigrations (array $migrations, $target = null)
   {
     $count = 0;
     foreach ($migrations as $migration) {
+      if ($migration[Migration::date] < $target)
+        break;
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
       foreach ($queries as $query)
         if ($query)
