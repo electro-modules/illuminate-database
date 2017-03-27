@@ -148,11 +148,11 @@ class MigrationCommands
   {
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->migrate (get ($options, 'target', '99999999999999'), $pretend);
+    $out     = $this->migrationsAPI->migrate (get ($options, 'target'), $pretend);
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'migration')))
+      ? $this->io->done (sprintf ('<info>%d %s ran successfully</info>', $out, simplePluralize ($out, 'migration')))
       : $this->io->warn ("Nothing to migrate")->done ();
     return 0;
   }
@@ -219,7 +219,8 @@ class MigrationCommands
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s rolled back successfully</info>', simplePluralize ($out, 'migration')))
+      ? $this->io->done (sprintf ('<info>%d %s rolled back successfully</info>', $out,
+        simplePluralize ($out, 'migration')))
       : $this->io->warn ("Nothing to roll back")->done ();
     return 0;
   }
@@ -252,7 +253,7 @@ class MigrationCommands
     if ($pretend)
       $this->io->writeln ($out);
     else $out
-      ? $this->io->done (sprintf ('<info>%s ran successfully</info>', simplePluralize ($out, 'seeder')))
+      ? $this->io->done (sprintf ('<info>%d %s ran successfully</info>', $out, simplePluralize ($out, 'seeder')))
       : $this->io->warn ("Nothing to seed")->done ();
     return 0;
   }

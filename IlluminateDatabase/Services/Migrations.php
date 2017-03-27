@@ -8,7 +8,6 @@ use Electro\Interfaces\Migrations\MigrationInterface;
 use Electro\Interfaces\Migrations\MigrationsInterface;
 use Electro\Interfaces\Migrations\SeederInterface;
 use Electro\Interop\MigrationStruct as Migration;
-use Electro\Interop\MigrationStruct;
 use Electro\Kernel\Lib\ModuleInfo;
 use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
@@ -71,6 +70,9 @@ class Migrations implements MigrationsInterface
 
   function migrate ($target = null, $pretend = false)
   {
+    if (is_null ($target))
+      $target = '99999999999999';
+
     $this->assertModuleIsSet ();
     $all      = $this->getAllMigrations ();
     $pending  = PA ($all)->findAll (Migration::status, Migration::PENDING)->A;
@@ -121,10 +123,11 @@ class Migrations implements MigrationsInterface
   function rollBack ($target = null, $pretend = false)
   {
     $this->assertModuleIsSet ();
-    $all      = $this->getAllMigrations ();
+    $all = $this->getAllMigrations ();
 
-    if (is_null($target)) {
-      $migration = PA ($all)->findAll (Migration::status, Migration::DONE)->orderBy (Migration::date, SORT_DESC)->first();
+    if (is_null ($target)) {
+      $migration =
+        PA ($all)->findAll (Migration::status, Migration::DONE)->orderBy (Migration::date, SORT_DESC)->first ();
       if ($migration)
         $target = $migration[Migration::date];
       else return 0;
