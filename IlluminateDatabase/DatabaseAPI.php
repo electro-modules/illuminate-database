@@ -33,6 +33,13 @@ class DatabaseAPI implements ConnectionResolverInterface
   {
     $this->manager     = new Manager;
     $this->connections = $connections;
+    $con               = $this->manager->getContainer ();
+    $factory           = function () { return new ElectroConnector; };
+
+    $con->bind ("db.connector.mysql", $factory, true);
+    $con->bind ("db.connector.pgsql", $factory, true);
+    $con->bind ("db.connector.sqlite", $factory, true);
+    $con->bind ("db.connector.sqlsrv", $factory, true);
   }
 
   /**
