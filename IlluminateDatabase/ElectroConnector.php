@@ -1,6 +1,7 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase;
 
+use Electro\Database\Lib\DebugPDO;
 use Illuminate\Database\Connectors\ConnectorInterface;
 use PhpKit\ExtPDO\ExtPDO;
 
@@ -9,6 +10,14 @@ use PhpKit\ExtPDO\ExtPDO;
  */
 class ElectroConnector implements ConnectorInterface
 {
+  /** @var bool */
+  private $debug;
+
+  public function __construct ($debug = false)
+  {
+    $this->debug = $debug;
+  }
+
   /**
    * Establish a database connection.
    *
@@ -17,7 +26,11 @@ class ElectroConnector implements ConnectorInterface
    */
   public function connect (array $config)
   {
-    return $config['pdo'] ?: ExtPDO::create ($config['driver'], $config);
+    $pdo = $config['pdo'];
+    if ($pdo)
+      return $pdo;
+    $pdo = ExtPDO::create ($config['driver'], $config);
+    return $this->debug ? new DebugPDO ($pdo) : $pdo;
   }
 
 }

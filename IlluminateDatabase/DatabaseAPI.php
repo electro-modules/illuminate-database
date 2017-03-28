@@ -2,6 +2,7 @@
 
 namespace Electro\Plugins\IlluminateDatabase;
 
+use Electro\Debugging\Config\DebugSettings;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\ConnectionResolverInterface;
 use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
@@ -29,12 +30,13 @@ class DatabaseAPI implements ConnectionResolverInterface
    */
   private $defaultConnection = 'default';
 
-  public function __construct (ConnectionsInterface $connections)
+  public function __construct (ConnectionsInterface $connections, DebugSettings $debugSettings)
   {
     $this->manager     = new Manager;
     $this->connections = $connections;
     $con               = $this->manager->getContainer ();
-    $factory           = function () { return new ElectroConnector; };
+    $logPdo            = $debugSettings->webConsole && $debugSettings->logDatabase;
+    $factory           = function () use ($logPdo) { return new ElectroConnector ($logPdo); };
 
     $con->bind ("db.connector.mysql", $factory, true);
     $con->bind ("db.connector.pgsql", $factory, true);
