@@ -17,9 +17,7 @@ class ElectroConnector implements ConnectorInterface
    */
   public function connect (array $config)
   {
-    /** @var ExtPDO $extPdo */
-    $extPdo = $config['pdo'];
-    return $extPdo;
+    return $config['pdo'] ?: ExtPDO::create ($config['driver'], $config);
   }
 
 }
