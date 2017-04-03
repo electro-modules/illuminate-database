@@ -22,7 +22,7 @@ class ElectroConnector implements ConnectorInterface
    * Establish a database connection.
    *
    * @param  array $config
-   * @return \PDO
+   * @return ExtPDO|DebugPDO
    */
   public function connect (array $config)
   {

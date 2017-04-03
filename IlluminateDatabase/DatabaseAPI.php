@@ -35,7 +35,7 @@ class DatabaseAPI implements ConnectionResolverInterface
     $this->manager     = new Manager;
     $this->connections = $connections;
     $con               = $this->manager->getContainer ();
-    $logPdo            = $debugSettings->webConsole && $debugSettings->logDatabase;
+    $logPdo            = $debugSettings->isWebConsoleAvailable () && $debugSettings->logDatabase;
     $factory           = function () use ($logPdo) { return new ElectroConnector ($logPdo); };
 
     $con->bind ("db.connector.mysql", $factory, true);
