@@ -1,10 +1,10 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase\Services;
 
-use Illuminate\Database\Eloquent\Model;
 use Electro\Database\Lib\AbstractModelController;
 use Electro\Interfaces\SessionInterface;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
+use Illuminate\Database\Eloquent\Model;
 
 class ModelController extends AbstractModelController
 {
@@ -19,16 +19,6 @@ class ModelController extends AbstractModelController
     $this->db = $db;
   }
 
-  protected function beginTransaction ()
-  {
-    $this->db->connection ()->beginTransaction ();
-  }
-
-  protected function commit ()
-  {
-    $this->db->connection ()->commit ();
-  }
-
   function loadData ($collection, $subModelPath = '', $id = null, $primaryKey = 'id')
   {
     // Does nothing; no low-level database access support on this implementation.
@@ -36,7 +26,7 @@ class ModelController extends AbstractModelController
 
   function loadModel ($modelClass, $subModelPath = '', $id = null)
   {
-    $id                = $this->requestedId ?: $id;
+    $id                = $id ?: $this->requestedId;
     $this->requestedId = $id;
 
     /** @var Model $modelClass */
@@ -47,16 +37,34 @@ class ModelController extends AbstractModelController
     return $model;
   }
 
-  protected function rollback ()
-  {
-    $this->db->connection ()->rollBack ();
-  }
-
   function save ($model)
   {
     if ($model instanceof Model)
       return $model->push ();
     return null;
+  }
+
+  function withRequestedId ($routeParam = 'id', $primaryKey = null)
+  {
+    $this->requestedId = $this->request->getAttribute ("@$routeParam");
+    if (isset($primaryKey))
+      throw new \RuntimeException ("A primary key name should not be specified; the model's key will be used.");
+    return $this;
+  }
+
+  protected function beginTransaction ()
+  {
+    $this->db->connection ()->beginTransaction ();
+  }
+
+  protected function commit ()
+  {
+    $this->db->connection ()->commit ();
+  }
+
+  protected function rollback ()
+  {
+    $this->db->connection ()->rollBack ();
   }
 
 }
