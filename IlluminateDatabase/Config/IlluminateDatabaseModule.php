@@ -23,6 +23,24 @@ use Illuminate\Events\Dispatcher;
 
 class IlluminateDatabaseModule implements ModuleInterface
 {
+  /**
+   * This is required by {@see deferredInit()}
+   *
+   * @var InjectorInterface
+   */
+  private static $injector;
+
+  /**
+   * This is called to lazy-instantiate required services when accessing Eloquent models statically.
+   *
+   * @return DatabaseAPI
+   * @throws \Auryn\InjectionException
+   */
+  static function getAPI ()
+  {
+    return self::$injector->make (DatabaseAPI::class);
+  }
+
   static function getCompatibleProfiles ()
   {
     return [WebProfile::class, ConsoleProfile::class];
@@ -33,6 +51,7 @@ class IlluminateDatabaseModule implements ModuleInterface
     $kernel
       ->onRegisterServices (
         function (InjectorInterface $injector) {
+          self::$injector = $injector;
           $injector
             ->share (DatabaseAPI::class)
             ->prepare (DatabaseAPI::class, function (DatabaseAPI $db) {
@@ -41,8 +60,6 @@ class IlluminateDatabaseModule implements ModuleInterface
               $db->manager->bootEloquent ();
               Model::setConnectionResolver ($db);
               $db->manager->getContainer ()->singleton (ExceptionHandlerInterface::class, ExceptionHandler::class);
-              DB::setInstance ($db);
-              Schema::setInstance ($db);
             })
             ->alias (ModelControllerInterface::class, ModelController::class)
             ->share (ModelController::class)

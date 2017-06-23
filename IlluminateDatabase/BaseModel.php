@@ -2,6 +2,7 @@
 
 namespace Electro\Plugins\IlluminateDatabase;
 
+use Electro\Plugins\IlluminateDatabase\Config\IlluminateDatabaseModule;
 use Electro\Traits\InspectionTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,11 @@ use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
+ * A base class for all of your application's Eloquent modules.
+ *
+ * <p>When using Eloquent with Electro, all your models should descend from this class instead of
+ * {@see Illuminate\Database\Eloquent\Model} so that the neccessary adaptations are performed.
+ *
  * @method static Model|Collection find($id, array $columns = ['*']) Find a model by its primary key.
  * @method static Model|Collection findOrFail($id, array $columns = ['*']) Find a model by its primary key or throw an
  *         exception.
@@ -23,6 +29,20 @@ class BaseModel extends Model implements \Serializable
   static $INSPECTABLE = ['attributes'];
 
   public $timestamps = false;
+
+  /**
+   * Lazily initializes the Illuminate database adapter when accessing Eloquent statically.
+   *
+   * @param  string $method
+   * @param  array  $args
+   * @return mixed
+   * @throws \Auryn\InjectionException
+   */
+  public static function __callStatic ($method, $args)
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return (new static)->$method(...$args);
+  }
 
   public function push ()
   {
