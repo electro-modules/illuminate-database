@@ -10,8 +10,6 @@ use Electro\Interfaces\ModuleInterface;
 use Electro\Kernel\Lib\ModuleInfo;
 use Electro\Plugins\IlluminateDatabase\Commands\MigrationCommands;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
-use Electro\Plugins\IlluminateDatabase\DB;
-use Electro\Plugins\IlluminateDatabase\Schema;
 use Electro\Plugins\IlluminateDatabase\Services\ExceptionHandler;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;

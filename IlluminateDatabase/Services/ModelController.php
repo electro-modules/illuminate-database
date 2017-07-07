@@ -6,6 +6,11 @@ use Electro\Interfaces\SessionInterface;
 use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * A Model Controller that handles Eloquent models.
+ *
+ * <p>Nested (sub)models are fully supported if the model classes define all the required relations between then.
+ */
 class ModelController extends AbstractModelController
 {
   /**
@@ -19,12 +24,11 @@ class ModelController extends AbstractModelController
     $this->db = $db;
   }
 
-  function loadData ($collection, $subModelPath = '', $id = null, $primaryKey = 'id')
-  {
-    // Does nothing; no low-level database access support on this implementation.
-  }
-
-  function loadModel ($modelClass, $subModelPath = '', $id = null)
+  /**
+   * {@inheritdoc}<br>
+   * <p>**Note:** For Eloquent models, a primary key name should not be specified; the model's key will be used.
+   */
+  function loadModel ($modelClass, $subModelPath = '', $id = null, $primaryKey = null)
   {
     $id                = $id ?: $this->requestedId;
     $this->requestedId = $id;
@@ -44,6 +48,10 @@ class ModelController extends AbstractModelController
     return null;
   }
 
+  /**
+   * {@inheritdoc}<br>
+   * <p>**Note:** For Eloquent models, a primary key name should not be specified; the model's key will be used.
+   */
   function withRequestedId ($routeParam = 'id', $primaryKey = null)
   {
     $this->requestedId = $this->request->getAttribute ("@$routeParam");
