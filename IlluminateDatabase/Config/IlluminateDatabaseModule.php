@@ -39,6 +39,16 @@ class IlluminateDatabaseModule implements ModuleInterface
     return self::$injector->make (DatabaseAPI::class);
   }
 
+  /**
+   * This is called by Eloquent models that have the {@see SideInjectionTrait}.
+   * @param callable $fn
+   * @throws \Auryn\InjectionException
+   */
+  static function inject (callable $fn)
+  {
+    self::$injector->execute ($fn);
+  }
+
   static function getCompatibleProfiles ()
   {
     return [WebProfile::class, ConsoleProfile::class];

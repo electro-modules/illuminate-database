@@ -30,6 +30,13 @@ class BaseModel extends Model implements \Serializable
 
   public $timestamps = false;
 
+  public function __construct (array $attributes = [])
+  {
+    parent::__construct ($attributes);
+    if (method_exists ($this, 'inject'))
+      IlluminateDatabaseModule::inject ([$this, 'inject']);
+  }
+
   /**
    * Lazily initializes the Illuminate database adapter when accessing Eloquent statically.
    *
