@@ -1,6 +1,7 @@
 <?php
 namespace Electro\Plugins\IlluminateDatabase\Config;
 
+use Electro\Authentication\Config\AuthenticationSettings;
 use Electro\ConsoleApplication\Config\ConsoleSettings;
 use Electro\Interfaces\DI\InjectorInterface;
 use Electro\Interfaces\KernelInterface;
@@ -13,6 +14,7 @@ use Electro\Plugins\IlluminateDatabase\DatabaseAPI;
 use Electro\Plugins\IlluminateDatabase\Services\ExceptionHandler;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
+use Electro\Plugins\IlluminateDatabase\Services\User;
 use Electro\Profiles\ConsoleProfile;
 use Electro\Profiles\WebProfile;
 use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerInterface;
@@ -73,6 +75,10 @@ class IlluminateDatabaseModule implements ModuleInterface
             ->share (ModelController::class)
             ->share (MigrationsSettings::class)
             ->alias (MigrationsInterface::class, Migrations::class);
+        })
+      ->onConfigure (
+        function (AuthenticationSettings $authSettings) {
+          $authSettings->userModel (User::class);
         });
 
     if ($kernel->getProfile () instanceof ConsoleProfile)
