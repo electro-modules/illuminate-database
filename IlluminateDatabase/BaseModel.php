@@ -26,6 +26,12 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 class BaseModel extends Model implements \Serializable
 {
   use InspectionTrait;
+
+  /**
+   * @type string[] A list of field names for multi-file fields. Each of those may contain a comma-separated list of
+   *                virtual file paths.
+   */
+  const GALLERY_FIELDS = [];
   static $INSPECTABLE = ['attributes'];
 
   public $timestamps = false;
