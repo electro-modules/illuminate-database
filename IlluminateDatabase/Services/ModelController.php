@@ -19,18 +19,16 @@ class ModelController extends AbstractModelController
     $this->db = $db;
   }
 
-  function loadData ($collection, $subModelPath = '', $id = null, $primaryKey = 'id')
-  {
-    // Does nothing; no low-level database access support on this implementation.
-  }
-
-  function loadModel ($modelClass, $subModelPath = '', $id = null)
+  function loadModel ($modelClassOrCollection, $subModelPath = '', $id = null, $primaryKey = null)
   {
     $id                = $id ?: $this->requestedId;
     $this->requestedId = $id;
 
-    /** @var Model $modelClass */
-    $model = exists ($id) ? $modelClass::query ()->findOrFail ($id) : new $modelClass;
+    if (!class_exists ($modelClassOrCollection))
+      throw new \RuntimeException ("The current Model Controller only supports Eloquent models.");
+
+    /** @var Model $modelClassOrCollection */
+    $model = exists ($id) ? $modelClassOrCollection::query ()->findOrFail ($id) : new $modelClassOrCollection;
     if ($subModelPath === '')
       $this->model = $model;
     else setAt ($this->model, $subModelPath, $model);
