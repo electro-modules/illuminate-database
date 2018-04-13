@@ -181,7 +181,7 @@ class User extends BaseModel implements UserInterface
   function registerUser($data)
   {
     $newPassword = password_hash(get($data, 'password'), PASSWORD_BCRYPT);
-    $now = date("Y-m-d h:i:s");
+    $now = Carbon::now();
     $email = get($data, 'email');
     $realName = get($data, 'realName');
     $token = get($data, 'token');
