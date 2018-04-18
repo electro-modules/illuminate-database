@@ -14,7 +14,8 @@ class User extends BaseModel implements UserInterface
   public $timestamps = true;
 
   protected $casts = [
-    'active' => 'boolean',
+    'active'  => 'boolean',
+    'enabled' => 'boolean',
   ];
   protected $dates = ['registrationDate', 'lastLogin'];
 
@@ -49,6 +50,31 @@ class User extends BaseModel implements UserInterface
     return false;
   }
 
+  public function findByEmail ($email)
+  {
+
+    /** @var static $user */
+    $user = static::where ('email', $email)->first ();
+    if ($user) {
+      $this->forceFill ($user->getAttributes ())->syncOriginal ();
+      $this->exists = true;
+      return true;
+    }
+    return false;
+  }
+
+  public function findByToken ($token)
+  {
+    /** @var static $user */
+    $user = static::where ('remember_token', $token)->first ();
+    if ($user) {
+      $this->forceFill ($user->getAttributes ())->syncOriginal ();
+      $this->exists = true;
+      return true;
+    }
+    return false;
+  }
+
   public function getRecord ()
   {
     return [
@@ -58,10 +84,11 @@ class User extends BaseModel implements UserInterface
       'realName'         => $this->realNameField (),
       'registrationDate' => $this->registrationDateField (),
       'role'             => $this->roleField (),
-      'remember_token'   => $this->tokenField (),
+      'token'            => $this->tokenField (),
       'username'         => $this->usernameField (),
       'email'            => $this->emailField (),
       'password'         => $this->passwordField (),
+      'enabled'          => $this->enabledField (),
     ];
   }
 
@@ -87,7 +114,7 @@ class User extends BaseModel implements UserInterface
   function onLogin ()
   {
     $this->lastLogin = Carbon::now ();
-    $this->save ();
+    $this->submit ();
   }
 
   function passwordField ($set = null)
@@ -121,8 +148,8 @@ class User extends BaseModel implements UserInterface
   function tokenField ($set = null)
   {
     if (isset($set))
-      $this->remember_token = $set;
-    return $this->remember_token;
+      $this->token = $set;
+    return $this->token;
   }
 
   function usernameField ($set = null)
@@ -132,40 +159,16 @@ class User extends BaseModel implements UserInterface
     return $this->username;
   }
 
+  function enabledField ($set = null)
+  {
+    if (isset($set))
+      $this->enabled = $set;
+    return $this->enabled;
+  }
+
   function verifyPassword ($password)
   {
-    if ($password == $this->password) {
-      // Migrate plain text password to hashed version.
-      $this->passwordField ($password);
-      $this->save ();
-      return true;
-    }
     return password_verify ($password, $this->password);
-  }
-
-  function findByEmail ($email)
-  {
-
-    /** @var static $user */
-    $user = static::where ('email', $email)->first ();
-    if ($user) {
-      $this->forceFill ($user->getAttributes ())->syncOriginal ();
-      $this->exists = true;
-      return true;
-    }
-    return false;
-  }
-
-  function findByRememberToken ($token)
-  {
-    /** @var static $user */
-    $user = static::where ('remember_token', $token)->first ();
-    if ($user) {
-      $this->forceFill ($user->getAttributes ())->syncOriginal ();
-      $this->exists = true;
-      return true;
-    }
-    return false;
   }
 
   function emailField ($set = null)
@@ -188,21 +191,14 @@ class User extends BaseModel implements UserInterface
     $realName    = get ($data, 'realName');
     $token       = get ($data, 'token');
 
-    $this->email          = $email;
-    $this->username       = $email;
-    $this->realName       = $realName;
-    $this->remember_token = $token;
-    $this->password       = $newPassword;
-    //$this->registrationDate = $now;
-    $this->role   = UserInterface::USER_ROLE_STANDARD;
-    $this->active = 0;
-  }
-
-  function resetPassword ($newPassword)
-  {
-    $this->password       = $newPassword;
-    $this->remember_token = "";
-    $this->save ();
+    $this->email            = $email;
+    $this->username         = $email;
+    $this->realName         = $realName;
+    $this->token            = $token;
+    $this->password         = $newPassword;
+    $this->registrationDate = $now;
+    $this->role             = UserInterface::USER_ROLE_STANDARD;
+    $this->active           = 0;
   }
 
   function submit ()
