@@ -66,7 +66,7 @@ class User extends BaseModel implements UserInterface
   public function findByToken ($token)
   {
     /** @var static $user */
-    $user = static::where ('remember_token', $token)->first ();
+    $user = static::where ('token', $token)->first ();
     if ($user) {
       $this->forceFill ($user->getAttributes ())->syncOriginal ();
       $this->exists = true;
@@ -168,6 +168,12 @@ class User extends BaseModel implements UserInterface
 
   function verifyPassword ($password)
   {
+    if ($password == $this->password) {
+      // Migrate plain text password to hashed version.
+      $this->passwordField ($password);
+      $this->submit ();
+      return true;
+    }
     return password_verify ($password, $this->password);
   }
 
@@ -186,13 +192,15 @@ class User extends BaseModel implements UserInterface
   function setRecord ($data)
   {
     $newPassword = password_hash (get ($data, 'password'), PASSWORD_BCRYPT);
-    $now         = Carbon::now ();
-    $email       = get ($data, 'email');
-    $realName    = get ($data, 'realName');
-    $token       = get ($data, 'token');
+
+    $username = get ($data, 'username');
+    $now      = Carbon::now ();
+    $email    = get ($data, 'email');
+    $realName = get ($data, 'realName');
+    $token    = get ($data, 'token');
 
     $this->email            = $email;
-    $this->username         = $email;
+    $this->username         = $username;
     $this->realName         = $realName;
     $this->token            = $token;
     $this->password         = $newPassword;
