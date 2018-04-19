@@ -19,6 +19,19 @@ class User extends BaseModel implements UserInterface
   ];
   protected $dates = ['registrationDate', 'lastLogin'];
 
+  const CREATED_AT = 'createdAt';
+  const UPDATED_AT = 'updatedAt';
+
+  public static function boot ()
+  {
+    parent::boot ();
+
+    static::creating (function ($model) {
+      $model->createdAt = $model->freshTimestamp ();
+      $model->updatedAt = $model->freshTimestamp ();
+    });
+  }
+
   function activeField ($set = null)
   {
     if (isset($set))
