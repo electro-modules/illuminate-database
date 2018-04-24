@@ -60,7 +60,10 @@ class DatabaseAPI implements ConnectionResolverInterface
     catch (\InvalidArgumentException $e) {
       $connectionName = $connectionName ?: 'default';
       $con            = $this->connections->get ($connectionName);
-      $this->manager->addConnection ($con->getProperties (), $connectionName);
+      $props          = $con->getProperties ();
+      // FIX: Illuminate requires 'host' to be non empty, even for SQLite.
+      $props['host'] = get ($props, 'host', 'localhost');
+      $this->manager->addConnection ($props, $connectionName);
       return $this->manager->getConnection ($connectionName);
     }
   }
