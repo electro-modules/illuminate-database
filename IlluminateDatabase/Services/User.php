@@ -1,4 +1,5 @@
 <?php
+
 namespace Electro\Plugins\IlluminateDatabase\Services;
 
 use Carbon\Carbon;
@@ -7,21 +8,39 @@ use Electro\Plugins\IlluminateDatabase\BaseModel;
 
 class User extends BaseModel implements UserInterface
 {
+  const CREATED_AT = 'registrationDate';
+  const UPDATED_AT = 'updatedAt';
   public $gender     = '$USER_THE';
   public $plural     = '$USERS';
   public $singular   = '$USER';
   public $timestamps = true;
-
   protected $casts = [
-    'active' => 'boolean',
+    'active'  => 'boolean',
+    'enabled' => 'boolean',
   ];
   protected $dates = ['registrationDate', 'lastLogin'];
 
-  function activeField ($set = null)
+  public static function boot ()
   {
-    if (isset($set))
-      $this->active = $set;
-    return $this->active;
+    parent::boot ();
+
+    static::creating (function ($model) {
+      $model->registrationDate = $model->freshTimestamp ();
+      $model->updatedAt        = $model->freshTimestamp ();
+    });
+  }
+
+  public function findByEmail ($email)
+  {
+
+    /** @var static $user */
+    $user = static::where ('email', $email)->first ();
+    if ($user) {
+      $this->forceFill ($user->getAttributes ())->syncOriginal ();
+      $this->exists = true;
+      return true;
+    }
+    return false;
   }
 
   public function findById ($id)
@@ -48,17 +67,33 @@ class User extends BaseModel implements UserInterface
     return false;
   }
 
-  public function getRecord ()
+  public function findByToken ($token)
+  {
+    /** @var static $user */
+    $user = static::where ('token', $token)->first ();
+    if ($user) {
+      $this->forceFill ($user->getAttributes ())->syncOriginal ();
+      $this->exists = true;
+      return true;
+    }
+    return false;
+  }
+
+  public function getFields ()
   {
     return [
-      'active'           => $this->activeField (),
-      'id'               => $this->idField (),
-      'lastLogin'        => $this->lastLoginField (),
-      'realName'         => $this->realNameField (),
-      'registrationDate' => $this->registrationDateField (),
-      'role'             => $this->roleField (),
-      'token'            => $this->tokenField (),
-      'username'         => $this->usernameField (),
+      'active'           => $this->active,
+      'id'               => $this->id,
+      'lastLogin'        => $this->lastLogin,
+      'realName'         => $this->realName,
+      'registrationDate' => $this->registrationDate,
+      'updatedAt'        => $this->updatedAt,
+      'role'             => $this->role,
+      'token'            => $this->token,
+      'username'         => $this->username,
+      'email'            => $this->email,
+      'password'         => '',
+      'enabled'          => $this->enabled,
     ];
   }
 
@@ -67,77 +102,46 @@ class User extends BaseModel implements UserInterface
     return $this->newQuery ()->where ('role', '<=', $this->role)->orderBy ('username')->get ()->all ();
   }
 
-  function idField ($set = null)
+  function mergeFields ($data)
   {
-    if (isset($set))
-      $this->id = $set;
-    return $this->id;
-  }
+    $pass = get ($data, 'password');
+    $data = array_merge ($this->getFields (), $data);
+    unset ($data['password']);
 
-  function lastLoginField ($set = null)
-  {
-    if (isset($set))
-      $this->lastLogin = $set;
-    return $this->lastLogin;
+    if (exists ($pass))
+      $data['password'] = password_hash ($pass, PASSWORD_BCRYPT);
+
+    if (array_key_exists ('active', $data)) $this->active = $data['active'];
+    if (array_key_exists ('enabled', $data)) $this->enabled = $data['enabled'];
+    if (array_key_exists ('realName', $data)) $this->realName = $data['realName'];
+    if (array_key_exists ('email', $data)) $this->email = $data['email'];
+    if (array_key_exists ('token', $data)) $this->token = $data['token'];
+    if (array_key_exists ('username', $data)) $this->username = $data['username'];
+    if (array_key_exists ('role', $data)) $this->role = $data['role'];
+    if (array_key_exists ('password', $data)) $this->password = $data['password'];
   }
 
   function onLogin ()
   {
     $this->lastLogin = Carbon::now ();
+    $this->submit ();
+  }
+
+  function remove ()
+  {
+    $this->delete ();
+  }
+
+  function submit ()
+  {
     $this->save ();
-  }
-
-  function passwordField ($set = null)
-  {
-    if (isset($set))
-      $this->password = password_hash ($set, PASSWORD_BCRYPT);
-    return $this->password;
-  }
-
-  function realNameField ($set = null)
-  {
-    if (isset($set))
-      return $this->realName = $set;
-    return $this->realName ?: ucfirst ($this->usernameField ());
-  }
-
-  function registrationDateField ($set = null)
-  {
-    if (isset($set))
-      $this->created_at = $set;
-    return $this->created_at;
-  }
-
-  function roleField ($set = null)
-  {
-    if (isset($set))
-      $this->role = $set;
-    return $this->role;
-  }
-
-  function tokenField ($set = null)
-  {
-    if (isset($set))
-      $this->token = $set;
-    return $this->token;
-  }
-
-  function usernameField ($set = null)
-  {
-    if (isset($set))
-      $this->username = $set;
-    return $this->username;
   }
 
   function verifyPassword ($password)
   {
     if ($password == $this->password) {
-      // Migrate plain text password to hashed version.
-      $this->passwordField ($password);
-      $this->save ();
       return true;
     }
     return password_verify ($password, $this->password);
   }
-
 }
