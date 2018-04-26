@@ -71,7 +71,7 @@ class MigrationCommands
    *                           spaces, but not accented characters). If not specified, the user will be prompted for it
    * @param array  $options
    * @option $class|l Do not generate a class name; use the provided one
-   * @option $template|t Use an alternative template
+   * @option $template|t Use an alternative template. It may be a template name or a file path.
    * @option $doc|d Generate embedded documentation.
    * @return int Status code
    */
@@ -92,8 +92,13 @@ class MigrationCommands
     $className = get ($options, 'class') ?: str_camelize ($name, true);
     $template  = get ($options, 'template') ?: $doc ? 'IlluminateMigration-doc.php' : 'IlluminateMigration.php';
 
-    $module     = $this->registry->getModule ($moduleName);
-    $srcPath    = sprintf ('%s/scaffolds/%s', dirname (__DIR__), $template);
+    $module  = $this->registry->getModule ($moduleName);
+    $srcPath = sprintf ('%s/scaffolds/%s', dirname (__DIR__), $template);
+    if (!fileExists ($srcPath)) {
+      $srcPath = $template;
+      if (!fileExists ($srcPath))
+        $io->error ("Template <info>$template</info> was not found");
+    }
     $filename   = sprintf ('%s_%s.php', strftime ('%Y%m%d%H%M%S'), str_decamelize ($className, false, '_'));
     $targetPath = "$module->path/{$this->settings->migrationsPath()}/$filename";
 

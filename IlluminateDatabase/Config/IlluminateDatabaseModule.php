@@ -15,6 +15,7 @@ use Electro\Plugins\IlluminateDatabase\Services\ExceptionHandler;
 use Electro\Plugins\IlluminateDatabase\Services\Migrations;
 use Electro\Plugins\IlluminateDatabase\Services\ModelController;
 use Electro\Plugins\IlluminateDatabase\Services\User;
+use Electro\Profiles\ApiProfile;
 use Electro\Profiles\ConsoleProfile;
 use Electro\Profiles\WebProfile;
 use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerInterface;
@@ -53,7 +54,7 @@ class IlluminateDatabaseModule implements ModuleInterface
 
   static function getCompatibleProfiles ()
   {
-    return [WebProfile::class, ConsoleProfile::class];
+    return [WebProfile::class, ConsoleProfile::class, ApiProfile::class];
   }
 
   static function startUp (KernelInterface $kernel, ModuleInfo $moduleInfo)
