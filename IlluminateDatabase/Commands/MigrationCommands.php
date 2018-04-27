@@ -90,7 +90,7 @@ class MigrationCommands
     }
     $doc       = get ($options, 'doc');
     $className = get ($options, 'class') ?: str_camelize ($name, true);
-    $template  = get ($options, 'template') ?: $doc ? 'IlluminateMigration-doc.php' : 'IlluminateMigration.php';
+    $template  = get ($options, 'template') ?: ($doc ? 'IlluminateMigration-doc.php' : 'IlluminateMigration.php');
 
     $module  = $this->registry->getModule ($moduleName);
     $srcPath = sprintf ('%s/scaffolds/%s', dirname (__DIR__), $template);

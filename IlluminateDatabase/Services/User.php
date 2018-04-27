@@ -5,6 +5,7 @@ namespace Electro\Plugins\IlluminateDatabase\Services;
 use Carbon\Carbon;
 use Electro\Interfaces\UserInterface;
 use Electro\Plugins\IlluminateDatabase\BaseModel;
+use Electro\Plugins\IlluminateDatabase\Config\IlluminateDatabaseModule;
 
 class User extends BaseModel implements UserInterface
 {
@@ -20,6 +21,9 @@ class User extends BaseModel implements UserInterface
   ];
   protected $dates = ['registrationDate', 'lastLogin'];
 
+  /**
+   * @throws \Auryn\InjectionException
+   */
   public static function boot ()
   {
     parent::boot ();
@@ -28,6 +32,8 @@ class User extends BaseModel implements UserInterface
       $model->registrationDate = $model->freshTimestamp ();
       $model->updatedAt        = $model->freshTimestamp ();
     });
+
+    IlluminateDatabaseModule::getAPI ();
   }
 
   public function findByEmail ($email)
