@@ -23,7 +23,7 @@
     "php": ">=5.6",
     "electro/interop": "^1.0.0",
     "php-kit/tools": "^2.0.0",
-    "illuminate/database": "5.6.*",
+    "illuminate/database": "5.5.40",
     "illuminate/events": "^5.2.7",
     "php-kit/ext-pdo": "^1.0.0",
     "php-kit/power-primitives": "^1.0.0"
