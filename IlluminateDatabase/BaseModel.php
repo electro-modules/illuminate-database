@@ -62,6 +62,9 @@ class BaseModel extends Model implements \Serializable
     // Before we save, save any parent entities
     foreach ($this->relations as $name => $model) {
 
+      if (!$model)
+        continue;
+
       if (!method_exists ($this, $name)) {
         if (!$model->push ()) return false;
         return true;
