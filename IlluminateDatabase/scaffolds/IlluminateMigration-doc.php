@@ -82,12 +82,12 @@ class __CLASS__ extends AbstractMigration
   function down ()
   {
     $schema = $this->db->schema ();
+    // WARNING: do NOT test for table existence, as this code will run when migrating (for storing the queries on the migrations table), NOT when rolling back!
 
     // Pick one of the alternatives below (and delete the other one):
 
-    // Drop the table created on up()
-    if ($schema->hasTable ('tableName'))
-      $schema->drop ('tableName');
+    // Drop the tables created on up(), in reverse order
+    $schema->drop ('tableName');
 
     // Or
 

@@ -1,19 +1,23 @@
 <?php
 
-use $useClassName;
+use Electro\Exceptions\Fatal\FileNotFoundException;
+use Electro\Plugins\IlluminateDatabase\AbstractSeeder;
 
-class $className extends $baseClassName
+class __CLASS__ extends AbstractSeeder
 {
+  /**
+   * @throws FileNotFoundException
+   */
   public function run ()
   {
-    $directory = __DIR__ . '/csv/';
+    $directory = __DIR__ . '/__NAME__/';
     $files     = preg_grep ('~\.(csv)$~', array_diff (scandir ($directory), ['..', '.']));
 
     echo PHP_EOL;
     foreach ($files as $file) {
       if ($this->importCsvFrom ($directory . $file))
-        $this->output->writeln ("The seeder file <info>$file</info> was imported successfully!");
+        $this->io->writeln ("The seeder file <info>$file</info> was imported");
     }
-    $this->output->done ('Done', true);
+    $this->io->done ('Done');
   }
 }

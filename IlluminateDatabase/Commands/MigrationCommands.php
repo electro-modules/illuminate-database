@@ -125,13 +125,57 @@ class MigrationCommands
    *                           If not specified, the user will be prompted for it
    * @param string $name       [optional] The name of the seeder (a human-friendly description, it may contain
    *                           spaces, but not accented characters). If not specified, the user will be prompted for it
+   * @param array  $options
+   * @option $class|l Do not generate a class name; use the provided one
+   * @option $template|t Use an alternative template. It may be a template name or a file path.
    * @return int Status code
    */
-  function makeSeeder ($moduleName = null, $name = null)
+  function makeSeeder ($moduleName = null, $name = null, $options = [
+    'class|l'    => null,
+    'template|t' => null,
+  ])
   {
+    $io = $this->io;
     $this->setupModule ($moduleName);
+    if (!$name) {
+      $name = $io->ask ('Seeder description:');
+      if (!$name)
+        $io->cancel ();
+    }
+    $className = get ($options, 'class') ?: str_camelize ($name, true);
+    $template  = get ($options, 'template') ?: 'Seeder.php';
 
-    return 0;
+    $module  = $this->registry->getModule ($moduleName);
+    $srcPath = sprintf ('%s/scaffolds/%s', dirname (__DIR__), $template);
+    if (!fileExists ($srcPath)) {
+      $srcPath = $template;
+      if (!fileExists ($srcPath))
+        $io->error ("Template <info>$template</info> was not found");
+    }
+    $name = str_decamelize ($className, false, '_');
+    $filename   = sprintf ('%s.php', $name);
+    $targetPath = "$module->path/{$this->settings->seedsPath ()}/$filename";
+
+    $io->mute ();
+    $this->fs->copy ($srcPath, $targetPath)->run ();
+
+    (new Replace ($targetPath))
+      ->from ([
+        '__CLASS__',
+        '__NAME__',
+      ])
+      ->to ([
+        $className,
+        $name,
+      ])
+      ->run ();
+
+    $csvPath = "$module->path/{$this->settings->seedsPath ()}/$name";
+    if (!file_exists ($csvPath))
+      mkdir ($csvPath);
+
+    $io->unmute ();
+    $io->done ("Seeder <info>$filename</info> was created");
   }
 
   /**
