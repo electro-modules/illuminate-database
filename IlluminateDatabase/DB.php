@@ -14,6 +14,7 @@ use Electro\Plugins\IlluminateDatabase\Config\IlluminateDatabaseModule;
  *
  * @method static \Illuminate\Database\Query\Builder table(string $table) Begin a fluent query against a database
  *         table.
+ * @method static mixed transaction(callable $fn)
  */
 class DB
 {
