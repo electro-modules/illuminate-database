@@ -128,6 +128,9 @@ abstract class AbstractSeeder implements SeederInterface
 
       $data = CsvUtil::loadCSV ($file, $columns);
       foreach ($data as $row) {
+        foreach ($row as $k => $v)
+          if ($v === '')
+            $row[$k] = null;
         $table = $this->db->table ($tableName);
         if (isset ($row['id']) && $table->find ($row['id']))
           $table->update ($row);
