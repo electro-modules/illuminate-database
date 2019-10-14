@@ -43,11 +43,41 @@ class BaseModel extends Model implements \Serializable
       IlluminateDatabaseModule::inject ([$this, 'inject']);
   }
 
+  public static function all ($columns = ['*'])
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return parent::all ($columns);
+  }
+
+  public static function query ()
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return parent::query ();
+  }
+
+  public static function with ($relations)
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return parent::with ($relations);
+  }
+
+  public static function destroy ($ids)
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return parent::destroy ($ids);
+  }
+
+  public static function on ($connection = null)
+  {
+    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+    return parent::on ($connection);
+  }
+
   /**
    * Lazily initializes the Illuminate database adapter when accessing Eloquent statically.
    *
-   * @param  string $method
-   * @param  array  $args
+   * @param string $method
+   * @param array  $args
    * @return mixed
    * @throws \Auryn\InjectionException
    */
