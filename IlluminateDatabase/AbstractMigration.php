@@ -22,6 +22,8 @@ abstract class AbstractMigration implements MigrationInterface
   protected $output;
   /** @var OutputInterface */
   private $savedOutput;
+  /** @var string The Connection Name. Leave null to set connectioName to default */
+  public $connectionName = null;
 
   public function __construct (DatabaseAPI $db, ConsoleIOInterface $consoleIO)
   {
@@ -65,7 +67,7 @@ abstract class AbstractMigration implements MigrationInterface
    */
   protected function dropColumn ($table, $column, $connectionName = null)
   {
-    $this->db->schema ($connectionName)
+    $this->db->schema ($connectionName ?: $this->connectionName)
              ->table ($table, function (Blueprint $table) use ($column) { $table->dropColumn ($column); });
   }
 
@@ -78,7 +80,7 @@ abstract class AbstractMigration implements MigrationInterface
   protected function getQueries ($method)
   {
     $this->mute ();
-    $queries = map ($this->db->connection ()->pretend (function () use ($method) {
+    $queries = map ($this->db->connection ($this->connectionName)->pretend (function () use ($method) {
       $this->$method ();
     }), function (array $info) {
       $bindings = $info['bindings'];
@@ -103,7 +105,7 @@ abstract class AbstractMigration implements MigrationInterface
    */
   protected function modifyTable ($table, callable $operation, $connectionName = null)
   {
-    $this->db->schema ($connectionName)->table ($table, $operation);
+    $this->db->schema ($connectionName ?: $this->connectionName)->table ($table, $operation);
   }
 
   /**
@@ -114,7 +116,7 @@ abstract class AbstractMigration implements MigrationInterface
    */
   protected function quote ($value)
   {
-    return $this->db->connection ()->getPdo ()->quote ($value);
+    return $this->db->connection ($this->connectionName)->getPdo ()->quote ($value);
   }
 
 }
