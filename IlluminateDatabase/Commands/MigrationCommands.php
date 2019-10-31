@@ -139,16 +139,19 @@ class MigrationCommands
    *                           with timestamps greater than it will be excluded; if not specified, it runs up to the
    *                           most recent pending migration
    * @option $pretend|p        Do not actually run the migration, just output the SQL code that would be executed
+   * @option $rollbackObsolete|r   Rollback obsolete migrations
    * @return int Status code
    */
   function migrate ($moduleName = null, $options = [
     'target|t'  => null,
     'pretend|p' => false,
+    'rollbackObsolete|r' => false
   ])
   {
     $this->setupModule ($moduleName);
     $pretend = get ($options, 'pretend');
-    $out     = $this->migrationsAPI->migrate (get ($options, 'target'), $pretend);
+    $rollbackObsolete = get ($options, 'rollbackObsolete');
+    $out     = $this->migrationsAPI->migrate (get ($options, 'target'), $pretend, $rollbackObsolete);
     if ($pretend)
       $this->io->writeln ($out);
     else $out

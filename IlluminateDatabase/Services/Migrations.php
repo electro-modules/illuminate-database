@@ -68,7 +68,7 @@ class Migrations implements MigrationsInterface
     return $this->databaseAPI->getConnections ()->exists ();
   }
 
-  function migrate ($target = null, $pretend = false)
+  function migrate ($target = null, $pretend = false, $rollbackObsolete = false)
   {
     if (is_null ($target))
       $target = '99999999999999';
@@ -76,12 +76,15 @@ class Migrations implements MigrationsInterface
     $this->assertModuleIsSet ();
     $all      = $this->getAllMigrations ();
     $pending  = PA ($all)->findAll (Migration::status, Migration::PENDING)->A;
-    $obsolete = PA ($all)->findAll (Migration::status, Migration::OBSOLETE)->orderBy (Migration::date, SORT_DESC)->A;
+
+    if ($rollbackObsolete)
+      $obsolete = PA ($all)->findAll (Migration::status, Migration::OBSOLETE)->orderBy (Migration::date, SORT_DESC)->A;
 
     // SIMULATE
 
     if ($pretend) {
-      $sql = $this->pretendRollBackMigrations ($obsolete);
+      if ($rollbackObsolete)
+        $sql = $this->pretendRollBackMigrations ($obsolete);
 
       foreach ($pending as $migration) {
         $path = $migration[Migration::path];
@@ -91,20 +94,24 @@ class Migrations implements MigrationsInterface
     }
 
     // MIGRATE
-
-    $count = $this->rollBackMigrations ($obsolete);
+    $count = 0;
+    if ($rollbackObsolete)
+      $count = $this->rollBackMigrations ($obsolete);
 
     foreach ($pending as $migration) {
       if ($migration[Migration::date] > $target)
         break;
       $path = $migration[Migration::path];
+      $migrator  = $this->loadMigrationClass ($path);
       $this->runMigrationSQL ($path);
       $migration[Migration::reverse] = $this->extractMigrationSQL ($path, 'down');
+      $migration[Migration::connection] = $migrator->connectionName;
       $this->getTable ()->insert (array_only ($migration, [
         Migration::date,
         Migration::module,
         Migration::name,
         Migration::reverse,
+        Migration::connection
       ]));
       ++$count;
     }
@@ -199,6 +206,7 @@ class Migrations implements MigrationsInterface
         $table->string (Migration::module, 64);
         $table->string (Migration::name, 128);
         $table->string (Migration::reverse, 1024);
+        $table->string (Migration::connection, 128);
         $table->primary (Migration::date);
       });
   }
@@ -254,7 +262,7 @@ class Migrations implements MigrationsInterface
         Migration::date   => $i,
         Migration::name   => Migration::nameFromFilename ($path),
         Migration::module => $this->module->name,
-        Migration::path   => $path,
+        Migration::path   => $path
       ];
     })->all ();
   }
@@ -329,7 +337,7 @@ class Migrations implements MigrationsInterface
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
       foreach ($queries as $query)
         if ($query)
-          $this->databaseAPI->connection ()->unprepared ($query);
+          $this->databaseAPI->connection ($migration[Migration::connection])->unprepared ($query);
       $this->getTable ()->where (Migration::date, $migration[Migration::date])->delete ();
       ++$count;
     }
@@ -339,7 +347,7 @@ class Migrations implements MigrationsInterface
   private function runMigrationSQL ($path, $method = 'up')
   {
     $migrator = $this->loadMigrationClass ($path);
-    $this->databaseAPI->connection ()->transaction (function () use ($migrator, $method) {
+    $this->databaseAPI->connection ($migrator->connectionName)->transaction (function () use ($migrator, $method) {
       $migrator->$method ();
     });
   }
