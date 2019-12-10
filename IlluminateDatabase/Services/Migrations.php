@@ -206,7 +206,7 @@ class Migrations implements MigrationsInterface
         $table->string (Migration::module, 64);
         $table->string (Migration::name, 128);
         $table->string (Migration::reverse, 1024);
-        $table->string (Migration::connection, 128);
+        $table->string (Migration::connection, 128)->nullable();
         $table->primary (Migration::date);
       });
   }
