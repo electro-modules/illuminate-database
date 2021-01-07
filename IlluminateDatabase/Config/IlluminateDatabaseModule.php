@@ -21,6 +21,10 @@ use Illuminate\Contracts\Debug\ExceptionHandler as ExceptionHandlerInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Events\Dispatcher;
 
+//PATCH: this is a workaround to allow us to use an older version of doctrine/inflector and not get the dreaded
+//deprecation warning.
+class_alias ('Electro\Plugins\IlluminateDatabase\Inflector', 'Doctrine\Common\Inflector\Inflector');
+
 class IlluminateDatabaseModule implements ModuleInterface
 {
   /**
