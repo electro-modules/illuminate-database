@@ -83,6 +83,7 @@ class Migrations implements MigrationsInterface
     // SIMULATE
 
     if ($pretend) {
+      $sql = '';
       if ($rollbackObsolete)
         $sql = $this->pretendRollBackMigrations ($obsolete);
 
