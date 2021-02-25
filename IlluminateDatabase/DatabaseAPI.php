@@ -12,9 +12,19 @@ use PhpKit\ExtPDO\Interfaces\ConnectionsInterface;
  *
  * <p>It integrates with PhpKit\ExtPDO and the framework's Database subsystem, so that connections defined on the
  * framework's {@see Connections} service are automatically available as Illuminate Database connections.
+ *
+ * > <b>WARNING! <br>
+ * > You cannot subclass this class!</b><br>
+ * > It would cause serious problems, such as duplicated connections being created and never closed.<br>
+ * > On long running scripts, this will eventually accumulate too much opened connections and reach the limit imposed
+ * > by the database server.
  */
-class DatabaseAPI implements ConnectionResolverInterface
+final class DatabaseAPI implements ConnectionResolverInterface
 {
+  /**
+   * @var bool Enforces the singleton pattern.
+   */
+  private static $created = false;
   /**
    * The database manager instance.
    *
@@ -32,6 +42,10 @@ class DatabaseAPI implements ConnectionResolverInterface
 
   public function __construct (ConnectionsInterface $connections, DebugSettings $debugSettings)
   {
+    if (self::$created)
+      throw new \LogicException(self::class .
+                                ' is a singleton service; you may inject it but you cannot instantiante it manually.');
+    self::$created     = true;
     $this->manager     = new Manager;
     $this->connections = $connections;
     $con               = $this->manager->getContainer ();
@@ -69,16 +83,6 @@ class DatabaseAPI implements ConnectionResolverInterface
   }
 
   /**
-   * Gets the database connection registry.
-   *
-   * @return ConnectionsInterface
-   */
-  public function getConnections ()
-  {
-    return $this->connections;
-  }
-
-  /**
    * Get the default connection name.
    *
    * @return string
@@ -91,12 +95,22 @@ class DatabaseAPI implements ConnectionResolverInterface
   /**
    * Set the default connection name.
    *
-   * @param  string $name
+   * @param string $name
    * @return void
    */
   public function setDefaultConnection ($name)
   {
     $this->defaultConnection = $name;
+  }
+
+  /**
+   * Gets the database connection registry.
+   *
+   * @return ConnectionsInterface
+   */
+  public function getConnections ()
+  {
+    return $this->connections;
   }
 
   /**
