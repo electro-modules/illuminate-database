@@ -216,7 +216,6 @@ class Migrations implements MigrationsInterface
   {
     $migrator  = $this->loadMigrationClass ($path);
     $queries   = $method == 'up' ? $migrator->getUpQueries () : $migrator->getDownQueries ();
-    $queries[] = ''; // Appends a ; to the last query.
     return implode (self::QUERY_DELIMITER, $queries);
   }
 
@@ -336,9 +335,11 @@ class Migrations implements MigrationsInterface
       if ($migration[Migration::date] < $target)
         break;
       $queries = explode (self::QUERY_DELIMITER, $migration[Migration::reverse]);
-      foreach ($queries as $query)
-        if ($query)
+      foreach ($queries as $query) {
+        $query = trim ($query);
+        if ($query && strtolower (substr($query, 0, 6)) != 'select')
           $this->databaseAPI->connection ($migration[Migration::connection])->unprepared ($query);
+      }
       $this->getTable ()->where (Migration::date, $migration[Migration::date])->delete ();
       ++$count;
     }
