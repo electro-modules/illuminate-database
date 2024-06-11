@@ -1,5 +1,4 @@
 <?php
-
 namespace Electro\Plugins\IlluminateDatabase;
 
 use Electro\Plugins\IlluminateDatabase\Config\IlluminateDatabaseModule;
@@ -25,188 +24,228 @@ use Illuminate\Database\Eloquent\Relations\Relation;
  */
 class BaseModel extends Model implements \Serializable
 {
-  use InspectionTrait;
 
-  /**
-   * @type string[] A list of field names for multi-file fields. Each of those may contain a comma-separated list of
-   *                virtual file paths.
-   */
-  const GALLERY_FIELDS = [];
-  static $INSPECTABLE = ['attributes'];
+	use InspectionTrait;
 
-  public $timestamps = false;
+	/**
+	 * @type string[] A list of field names for multi-file fields. Each of those may contain a comma-separated list of
+	 *                virtual file paths.
+	 */
+	const GALLERY_FIELDS = [];
 
-  public function __construct (array $attributes = [])
-  {
-    parent::__construct ($attributes);
-    if (method_exists ($this, 'inject'))
-      IlluminateDatabaseModule::inject ([$this, 'inject']);
-  }
+	static $INSPECTABLE = ['attributes'];
+	public $timestamps = false;
 
-  public static function all ($columns = ['*'])
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return parent::all ($columns);
-  }
+	public function __construct(array $attributes = [])
+	{
+		parent::__construct($attributes);
+		if (method_exists($this, 'inject'))
+			IlluminateDatabaseModule::inject([$this, 'inject']);
+	}
 
-  public static function query ()
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return parent::query ();
-  }
+	public static function all($columns = ['*'])
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return parent::all($columns);
+	}
 
-  public static function with ($relations)
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return parent::with ($relations);
-  }
+	public static function query()
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return parent::query();
+	}
 
-  public static function destroy ($ids)
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return parent::destroy ($ids);
-  }
+	public static function with($relations)
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return parent::with($relations);
+	}
 
-  public static function on ($connection = null)
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return parent::on ($connection);
-  }
+	public static function destroy($ids)
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return parent::destroy($ids);
+	}
 
-  /**
-   * Lazily initializes the Illuminate database adapter when accessing Eloquent statically.
-   *
-   * @param string $method
-   * @param array  $args
-   * @return mixed
-   * @throws \Auryn\InjectionException
-   */
-  public static function __callStatic ($method, $args)
-  {
-    IlluminateDatabaseModule::getAPI (); // The return value is ignored but Eloquent is lazily-initialized, if not already.
-    return (new static)->$method(...$args);
-  }
+	public static function on($connection = null)
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return parent::on($connection);
+	}
 
-  public function push ()
-  {
-    // Before we save, save any parent entities
-    foreach ($this->relations as $name => $model) {
+	/**
+	 * Lazily initializes the Illuminate database adapter when accessing Eloquent statically.
+	 *
+	 * @param string $method
+	 * @param array  $args
+	 * @return mixed
+	 * @throws \Auryn\InjectionException
+	 */
+	public static function __callStatic($method, $args)
+	{
+		IlluminateDatabaseModule::getAPI(); // The return value is ignored but Eloquent is lazily-initialized, if not already.
+		return (new static)->$method(...$args);
+	}
 
-      if (!$model)
-        continue;
+	public function push()
+	{
+		// Before we save, save any parent entities
+		foreach ($this->relations as $name => $model)
+		{
 
-      if (!method_exists ($this, $name)) {
-        if (!$model->push ()) return false;
-        return true;
-      }
+			if (!$model)
+				continue;
 
-      // Get relationship type
-      $relation = $this->$name();
+			if (!method_exists($this, $name))
+			{
+				if (!$model->push())
+					return false;
+				return true;
+			}
 
-      if (!($relation instanceof BelongsTo)) {
-        continue;
-      }
+			// Get relationship type
+			$relation = $this->$name();
 
-      if (!$model->push ()) return false;
+			if (!($relation instanceof BelongsTo))
+			{
+				continue;
+			}
 
-      $relation->associate ($model);
-    }
+			if (!$model->push())
+				return false;
 
-    if (!$this->save ()) return false;
+			$relation->associate($model);
+		}
 
-    // Now the other relationships
-    /** @var Model $models */
-    foreach ($this->relations as $name => $models) {
+		if (!$this->save())
+			return false;
 
-      if (!method_exists ($this, $name)) {
-        if (!$models->push ()) return false;
-        return true;
-      }
+		// Now the other relationships
+		/** @var Model $models */
+		foreach ($this->relations as $name => $models)
+		{
 
-      // Get relationship
-      /** @var Relation $relation */
-      $relation = $this->$name();
+			if (!method_exists($this, $name))
+			{
+				if (!$models->push())
+					return false;
+				return true;
+			}
 
-      if ($models instanceof Model)
-        $models = [$models];
-      /** @var Model $model */
-      foreach (Collection::make ($models) as $model) {
-        // $model may be a foreign key value submitted by a form
-        if (is_scalar ($model)) {
-          $value = $model;
-          $class = get_class ($relation->getRelated ());
-          $model = $class::find ($value)
-            ?: $relation->getRelated ()->newInstance ([$relation->getRelated ()->primaryKey => $value]);
-        }
-        if ($relation instanceof HasManyThrough) {
-          if (!$model->push ()) return false;
-        }
-        elseif ($relation instanceof HasOneOrMany) {
-          $fkey = $relation->getForeignKeyName ();
-          $model->setAttribute ($fkey, $relation->getParentKey ());
-          if ($relation instanceof MorphOneOrMany) {
-            $mt = $relation->getMorphType ();
-            $m  = $relation->getMorphClass ();
-            $model->setAttribute ($mt, $m);
-          }
-          $model->push ();
-          if (!$relation->save ($model)) return false;
-        }
-        elseif ($relation instanceof BelongsToMany) {
-          if (!$model->push ()) return false;
-          if (!$model->pivot) {
-            $relation->attach ($model);
-          }
-        }
-      }
-    }
+			// Get relationship
+			/** @var Relation $relation */
+			$relation = $this->$name();
 
-    return true;
-  }
+			if ($models instanceof Model)
+				$models = [$models];
+			/** @var Model $model */
+			foreach (Collection::make($models) as $model)
+			{
+				// $model may be a foreign key value submitted by a form
+				if (is_scalar($model))
+				{
+					$value = $model;
+					$class = get_class($relation->getRelated());
+					$model = $class::find($value) ?: $relation->getRelated()->newInstance([$relation->getRelated()->primaryKey => $value]);
+				}
+				if ($relation instanceof HasManyThrough)
+				{
+					if (!$model->push())
+						return false;
+				}
+				elseif ($relation instanceof HasOneOrMany)
+				{
+					$fkey = $relation->getForeignKeyName();
+					$model->setAttribute($fkey, $relation->getParentKey());
+					if ($relation instanceof MorphOneOrMany)
+					{
+						$mt = $relation->getMorphType();
+						$m = $relation->getMorphClass();
+						$model->setAttribute($mt, $m);
+					}
+					$model->push();
+					if (!$relation->save($model))
+						return false;
+				}
+				elseif ($relation instanceof BelongsToMany)
+				{
+					if (!$model->push())
+						return false;
+					if (!$model->pivot)
+					{
+						$relation->attach($model);
+					}
+				}
+			}
+		}
 
-  public function serialize ()
-  {
-    return serialize ([
-      'attributes' => $this->attributes,
-      'original'   => $this->original,
-    ]);
-  }
+		return true;
+	}
 
-  public function setAttribute ($key, $value)
-  {
-    // Check if key is actually a relationship
-    /** @var Relation $relation */
-    if (method_exists ($this, $key)) {
-      // If so, convert scalars and arrays to instances of the correct model
-      if (isset($value) && !$value instanceof Model) {
+	public function __serialize()
+	{
+		return [
+			'attributes' => $this->attributes,
+			'original' => $this->original,
+		];
+	}
 
-        /** @var Relation $relation */
-        $relation = $this->$key();
-        // Convert arrays to instances of the correct model
-        if (is_array ($value)) {
-          if (isset($value[0]) && is_scalar ($value[0])) {
+	public function serialize()
+	{
+		return serialize([
+			'attributes' => $this->attributes,
+			'original' => $this->original,
+		]);
+	}
 
-          }
-          else $value = $relation->getRelated ()->newInstance ($value);
-        }
+	public function setAttribute($key, $value)
+	{
+		// Check if key is actually a relationship
+		/** @var Relation $relation */
+		if (method_exists($this, $key))
+		{
+			// If so, convert scalars and arrays to instances of the correct model
+			if (isset($value) && !$value instanceof Model)
+			{
 
-        if ($relation instanceof BelongsTo) {
-          $relation->associate ($value);
-        }
-        else {
-          $this->setRelation ($key, $value);
-        }
-        return;
-      }
-    }
-    parent::setAttribute ($key, $value);
-  }
+				/** @var Relation $relation */
+				$relation = $this->$key();
+				// Convert arrays to instances of the correct model
+				if (is_array($value))
+				{
+					if (isset($value[0]) && is_scalar($value[0]))
+					{
 
-  public function unserialize ($serialized)
-  {
-    $data             = unserialize ($serialized);
-    $this->attributes = $data['attributes'];
-    $this->original   = $data['original'];
-  }
+					}
+					else
+						$value = $relation->getRelated()->newInstance($value);
+				}
+
+				if ($relation instanceof BelongsTo)
+				{
+					$relation->associate($value);
+				}
+				else
+				{
+					$this->setRelation($key, $value);
+				}
+				return;
+			}
+		}
+		parent::setAttribute($key, $value);
+	}
+
+	public function __unserialize(array $data): void
+	{
+		$this->attributes = $data['attributes'];
+		$this->original = $data['original'];
+	}
+
+	public function unserialize($serialized)
+	{
+		$data = unserialize($serialized);
+		$this->attributes = $data['attributes'];
+		$this->original = $data['original'];
+	}
 
 }
