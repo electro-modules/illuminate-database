@@ -14,20 +14,17 @@ use Electro\Kernel\Services\ModulesRegistry;
 use Electro\Plugins\IlluminateDatabase\Config\MigrationsSettings;
 use Robo\Task\File\Replace;
 use Robo\Task\FileSystem\FilesystemStack;
+use Robo\Tasks;
 
 /**
  * Database migration commands.
  */
-class MigrationCommands
+class MigrationCommands extends Tasks
 {
-  /**
-   * @var FilesystemStack
-   */
-  private $fs;
   /**
    * @var ConsoleIO
    */
-  private $io;
+  protected $io;
   /**
    * @var MigrationsInterface
    */
@@ -50,14 +47,13 @@ class MigrationCommands
   private $settings;
 
   function __construct (MigrationsSettings $settings, ConsoleIO $io, ModulesUtil $modulesUtil,
-                        MigrationsInterface $migrationsAPI, FilesystemStack $fs,
+                        MigrationsInterface $migrationsAPI,
                         ModulesRegistry $registry, ModulesInstaller $modulesInstaller)
   {
     $this->io               = $io;
     $this->modulesUtil      = $modulesUtil;
     $this->settings         = $settings;
     $this->migrationsAPI    = $migrationsAPI;
-    $this->fs               = $fs;
     $this->registry         = $registry;
     $this->modulesInstaller = $modulesInstaller;
   }
@@ -103,16 +99,20 @@ class MigrationCommands
     $targetPath = "$module->path/{$this->settings->migrationsPath()}/$filename";
 
     $io->mute ();
-    $this->fs->copy ($srcPath, $targetPath)->run ();
 
-    (new Replace ($targetPath))
-      ->from ([
+    $this->taskFilesystemStack()
+         ->copy($srcPath, $targetPath)
+         ->run();
+
+    $this
+      ->taskReplaceInFile($targetPath)
+      ->from([
         '__CLASS__',
       ])
-      ->to ([
+      ->to([
         $className,
       ])
-      ->run ();
+      ->run();
 
     $io->unmute ();
     $io->done ("Migration <info>$filename</info> was created");
@@ -157,18 +157,20 @@ class MigrationCommands
     $targetPath = "$module->path/{$this->settings->seedsPath ()}/$filename";
 
     $io->mute ();
-    $this->fs->copy ($srcPath, $targetPath)->run ();
 
-    (new Replace ($targetPath))
-      ->from ([
+    $this->taskFilesystemStack ()->copy ($srcPath, $targetPath)->run ();
+
+    $this
+      ->taskReplaceInFile($targetPath)
+      ->from([
         '__CLASS__',
         '__NAME__',
       ])
-      ->to ([
+      ->to([
         $className,
         $name,
       ])
-      ->run ();
+      ->run();
 
     $csvPath = "$module->path/{$this->settings->seedsPath ()}/$name";
     if (!file_exists ($csvPath))
